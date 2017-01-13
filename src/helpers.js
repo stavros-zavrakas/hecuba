@@ -1,3 +1,5 @@
+'use strict';
+
 const consistencyOptions = [
   'any',
   'one',
@@ -12,6 +14,35 @@ const consistencyOptions = [
   'localOne',
 ];
 
+const types = [
+  'custom',
+  'ascii',
+  'bigint',
+  'blob',
+  'boolean',
+  'counter',
+  'decimal',
+  'double',
+  'float',
+  'int',
+  'text',
+  'timestamp',
+  'uuid',
+  'varchar',
+  'varint',
+  'timeuuid',
+  'inet',
+  'date',
+  'time',
+  'smallint',
+  'tinyint',
+  'list',
+  'map',
+  'set',
+  'udt',
+  'tuple'
+];
+
 function getDefaultOptions() {
   return {
     contactPoints: ['127.0.0.1']
@@ -20,5 +51,6 @@ function getDefaultOptions() {
 
 module.exports = {
   consistencyOptions,
+  types,
   getDefaultOptions
 };

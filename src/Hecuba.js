@@ -4,6 +4,8 @@ const cassandraDriver = require('cassandra-driver');
 
 const helpers = require('./helpers');
 
+const Model = require('./Model');
+
 const { consistencyOptions, getDefaultOptions } = helpers;
 
 class Hecuba {
@@ -26,6 +28,8 @@ class Hecuba {
     }
 
     this.client = new cassandraDriver.Client(this.config);
+
+    this.models = {};
   }
 
   connect(callback) {
@@ -38,8 +42,14 @@ class Hecuba {
     });
   }
 
-  model(modelName, schema) {
+  model(name, schema) {
+    if (this.models[name]) {
+      throw new Error(`The model with the name [ ${name} ] is already defined`);
+    }
 
+    this.models[name] = new Model(this.client, name, schema);
+
+    return this.models[name];
   }
 
 }
