@@ -5,8 +5,7 @@ const hecuba = new Hecuba();
 hecuba.connect((err) => {
   console.log('hecuba connected succesfully');
 
-  debugger;
-
+  // Model with partitionKeys & clusteringColumns
   const userModel = hecuba.model('user')
     .partitionKeys(['user_id'])
     .clusteringColumns(['first_name'])
@@ -17,5 +16,13 @@ hecuba.connect((err) => {
       is_confirmed: 'boolean'
     });
 
-  console.log(userModel);
+  // Model with partitionKeys
+  const bookModel = hecuba.model('book')
+    .partitionKeys(['book_id'])
+    .schema({
+      book_id: 'timeuuid',
+      title: 'text',
+      description: 'text',
+      isbn: 'text'
+    });
 });
