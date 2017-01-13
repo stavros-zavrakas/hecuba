@@ -29,6 +29,8 @@ class Hecuba {
 
     this.client = new cassandraDriver.Client(this.config);
 
+    this.keyspace = config.keyspace || '';
+
     this.models = {};
   }
 
@@ -42,12 +44,12 @@ class Hecuba {
     });
   }
 
-  model(name, schema) {
+  model(name) {
     if (this.models[name]) {
       throw new Error(`The model with the name [ ${name} ] is already defined`);
     }
 
-    this.models[name] = new Model(this.client, name, schema);
+    this.models[name] = new Model(this.client, this.keyspace, name);
 
     return this.models[name];
   }

@@ -1,6 +1,10 @@
 const Hecuba = require('../src/Hecuba');
 
-const hecuba = new Hecuba();
+const config = {
+  keyspace: 'hecuba'
+};
+
+const hecuba = new Hecuba(config);
 
 hecuba.connect((err) => {
   console.log('hecuba connected succesfully');
@@ -25,4 +29,15 @@ hecuba.connect((err) => {
       description: 'text',
       isbn: 'text'
     });
+
+
+  userModel.find({
+    user_id: '5151df1c-d931-11e6-bf26-cec0c932ce01',
+  }, (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+
+    console.log(data);
+  })
 });
