@@ -116,7 +116,7 @@ function createFieldsValuesObject(whereObject) {
           if (cond === '$in') {
             // The values of an IN query must be an array
             if (!_.isArray(condition[cond])) {
-              throw new Error(`The values of the ${cond} must be typeof array`)
+              throw new Error(`The values of the ${cond} must be typeof array`);
             }
 
             // Create the placeholders

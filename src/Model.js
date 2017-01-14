@@ -37,7 +37,7 @@ class Model {
   _validateSchema(schema) {
     const keys = Object.keys(schema);
 
-    const isValidSchema = keys.every(key => {
+    keys.every(key => {
       if (types.indexOf(schema[key]) === -1) {
         throw new Error(`Type [ ${schema[key]} ] is not a valid type`);
       }
@@ -233,7 +233,7 @@ class Model {
         callback = options;
         options = {};
       }
-      debugger;
+
       const fields = Object.keys(whereObject);
 
       const params = {
@@ -256,7 +256,7 @@ class Model {
 
       // @todo: validate the limit and ensure that is an integer
       if (options.limit) {
-        query += ` LIMIT ${options.limit}`
+        query += ` LIMIT ${options.limit}`;
       }
     }
 
@@ -265,7 +265,7 @@ class Model {
         return callback(err);
       }
 
-      return callback(null, result.rows)
+      return callback(null, result.rows);
     });
   }
 

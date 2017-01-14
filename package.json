@@ -4,6 +4,7 @@
   "description": "Cassandra wrapper",
   "main": "index.js",
   "scripts": {
+    "eslint": "eslint --ignore-path .gitignore .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Stavros Zavrakas",
@@ -11,5 +12,8 @@
   "dependencies": {
     "cassandra-driver": "3.1.6",
     "lodash": "4.17.4"
+  },
+  "devDependencies": {
+    "eslint": "3.13.1"
   }
 }

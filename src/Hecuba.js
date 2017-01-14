@@ -24,7 +24,7 @@ class Hecuba {
     if (consistency && consistencyOptions.indexOf(consistency)) {
       this.config.queryOptions = {
         consistency: cassandraDriver.types.consistencies[consistency]
-      }
+      };
     }
 
     this.client = new cassandraDriver.Client(this.config);

@@ -7,6 +7,10 @@ const config = {
 const hecuba = new Hecuba(config);
 
 hecuba.connect((err) => {
+  if (err) {
+    console.log(err);
+  }
+  
   console.log('hecuba connected succesfully');
 
   // Model with partitionKeys & clusteringColumns
