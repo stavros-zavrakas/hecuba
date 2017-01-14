@@ -256,8 +256,22 @@ class Model {
 
         queryObj = helpers.createFieldsValuesObject(whereObject);
 
-        query += ` WHERE `;
-        query += queryObj.fields.join(' AND ');
+        query += helpers.generateWhereClause(queryObj.fields);
+
+        if (options.$orderby) {
+          const keys = Object.keys(options.$orderby);
+          const key = keys[0];
+
+          const sortOpts = {
+            $desc: 'DESC',
+            $asc: 'ASC'
+          };
+
+          const sorting = sortOpts[key];
+          if (sorting) {
+            query += ` ORDER BY ${options.$orderby[key]} ${sorting}`;
+          }
+        }
 
         // @todo: validate the limit and ensure that is an integer
         if (options.$limit) {

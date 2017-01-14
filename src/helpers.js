@@ -141,6 +141,12 @@ function createFieldsValuesObject(whereObject) {
   }, { fields: [], values: [] });
 }
 
+function generateWhereClause(fields) {
+  let query = ` WHERE `;
+  query += fields.join(' AND ');
+
+  return query;
+}
 
 module.exports = {
   consistencyOptions,
@@ -148,5 +154,6 @@ module.exports = {
   queryOperators,
   getDefaultOptions,
   isValidWhereClause,
-  createFieldsValuesObject
+  createFieldsValuesObject,
+  generateWhereClause
 };

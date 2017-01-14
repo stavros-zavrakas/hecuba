@@ -127,4 +127,61 @@ hecuba.connect((err) => {
     logger.info('Find products by store_id and filter using the price field', data);
   });
 
+  // find products by store_id and filter using the price
+  productsModel.find({
+    store_id: '2bf51c4a-da5b-11e6-bf26-cec0c932ce01',
+    price: {
+      $gte: 50,
+      $lte: 250
+    }
+  }, {
+    $limit: 1
+  }, (err, data) => {
+    if (err) {
+      logger.error('Error performing an filtering query', err);
+    }
+
+    logger.info('Find products by store_id, filter using the price field and limit the results', data);
+  });
+
+  // find products by store_id and filter using the price
+  productsModel.find({
+    store_id: '2bf51c4a-da5b-11e6-bf26-cec0c932ce01',
+    price: {
+      $gte: 50,
+      $lte: 250
+    }
+  }, {
+    $orderby: {
+      $desc: 'price'
+    },
+    $limit: 10
+  }, (err, data) => {
+    if (err) {
+      logger.error('Error performing an filtering query', err);
+    }
+
+    logger.info('Find products by store_id, filter using the price field, order desc and limit the results', data);
+  });
+
+  // find products by store_id and filter using the price
+  productsModel.find({
+    store_id: '2bf51c4a-da5b-11e6-bf26-cec0c932ce01',
+    price: {
+      $gte: 50,
+      $lte: 250
+    }
+  }, {
+    $orderby: {
+      $asc: 'price'
+    },
+    $limit: 10
+  }, (err, data) => {
+    if (err) {
+      logger.error('Error performing an filtering query', err);
+    }
+
+    logger.info('Find products by store_id, filter using the price field, order asc and limit the results', data);
+  });
+
 });
