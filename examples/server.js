@@ -32,6 +32,17 @@ hecuba.connect((err) => {
   //   });
 
 
+  // Find all users
+  userModel.find((err, data) => {
+    if (err) {
+      console.log(err);
+    }
+
+    console.log('Find all users result');
+    console.log(data);
+  });
+
+  // Find by user_id
   userModel.find({
     user_id: '5151df1c-d931-11e6-bf26-cec0c932ce01',
   }, (err, data) => {
@@ -39,6 +50,20 @@ hecuba.connect((err) => {
       console.log(err);
     }
 
+    console.log('Find by user_id result');
     console.log(data);
-  })
+  });
+
+  // FindOne by user_id
+  userModel.findOne({
+    user_id: '5151df1c-d931-11e6-bf26-cec0c932ce01',
+  }, (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+
+    console.log('FindOne by user_id result');
+    console.log(data);
+  });
+
 });

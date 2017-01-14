@@ -200,37 +200,53 @@ class Model {
    * Analyzing the where object and produces the proper query statements.
    * Then fires the find request agains the cassandra driver.
    *
-   * @return The instance of the model so that we can chain on it
+   * @return An array of objects that the query was able to match in the database
    *
    * @todo: 
    * - Calculate the select as (selectParams) instead of having always *?
    * - Check the options and in the case of findOne add the limit to the query
    */
   find(whereObject, options, callback) {
-    if (arguments.length === 2 && typeof options === 'function') {
-      callback = options;
-      options = {};
-    }
-
-    const fields = Object.keys(whereObject);
-
-    const params = {
-      fields: fields,
-      partitionKeys: this._partitionKeys,
-      clusteringColumns: this._clusteringColumns,
-      indexes: this._indexes
+    let query = `SELECT * FROM ${this.table}`;
+    
+    let queryObj = { 
+      fields: [],
+      values: []
     };
 
-    const isValidWhere = helpers.isValidateWhereClause(params);
+    if (arguments.length === 1) {
+      callback =  whereObject;
+    } else {
+      if (arguments.length === 2) {
+        callback = options;
+        options = {};
+      }
 
-    if (!isValidWhere) {
-      return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
+      const fields = Object.keys(whereObject);
+
+      const params = {
+        fields: fields,
+        partitionKeys: this._partitionKeys,
+        clusteringColumns: this._clusteringColumns,
+        indexes: this._indexes
+      };
+
+      const isValidWhere = helpers.isValidateWhereClause(params);
+
+      if (!isValidWhere) {
+        return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
+      }
+
+      queryObj = helpers.createFieldsValuesObject({ fields, whereObject });
+
+      query += ` WHERE `;
+      query += queryObj.fields.join(' AND ');
+
+      // @todo: validate the limit and ensure that is an integer
+      if (options.limit) {
+        query += ` LIMIT ${options.limit}`
+      }
     }
-
-    const queryObj = helpers.createFieldsValuesObject({ fields, whereObject });
-
-    let query = `SELECT * FROM ${this.table} WHERE `;
-    query += queryObj.fields.join(' AND ');
 
     this.connection.execute(query, queryObj.values, { prepare: true }, (err, result) => {
       if (err) {
@@ -241,8 +257,33 @@ class Model {
     });
   }
 
-  findOne(keys, callback) {
+  /**
+   * Proxy to the find function. It limits the results to one object and is
+   * just returns an object instead of an array
+   *
+   * @return The object that was able to be retrieved fro the database
+   *
+   * @todo: 
+   * - Calculate the select as (selectParams) instead of having always *?
+   * - Check the options and in the case of findOne add the limit to the query
+   */
+  findOne(whereObject, callback) {
+    const options = {
+      limit: 1
+    };
 
+    this.find(whereObject, options, (err, data) => {
+      if (err) {
+        return callback(err);
+      }
+
+      let result = {};
+      if(Array.isArray(data) && data[0]) {
+        result = data[0];
+      }
+
+      return callback(null, result);
+    });
   }
 
   save() {
