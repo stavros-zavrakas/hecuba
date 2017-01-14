@@ -2,6 +2,8 @@
 
 const _ = require('lodash');
 
+const QueryBuilder = require('./QueryBuilder');
+
 const helpers = require('./helpers');
 
 const { types } = helpers;
@@ -223,64 +225,27 @@ class Model {
    *   };
    */
   find(whereObject, options, callback) {
-    let query = `SELECT * FROM ${this.table}`;
-
-    let queryObj = { 
-      fields: [],
-      values: []
-    };
-
     if (arguments.length === 1) {
       callback =  whereObject;
-    } else {
-      if (arguments.length === 2) {
-        callback = options;
-        options = {};
-      }
-
-      if (!_.isEmpty(whereObject)) {
-        const fields = Object.keys(whereObject);
-
-        const params = {
-          fields: fields,
-          partitionKeys: this._partitionKeys,
-          clusteringColumns: this._clusteringColumns,
-          indexes: this._indexes
-        };
-
-        const isValidWhere = helpers.isValidWhereClause(params);
-
-        if (!isValidWhere) {
-          return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
-        }
-
-        queryObj = helpers.createFieldsValuesObject(whereObject);
-
-        query += helpers.generateWhereClause(queryObj.fields);
-
-        if (options.$orderby) {
-          const keys = Object.keys(options.$orderby);
-          const key = keys[0];
-
-          const sortOpts = {
-            $desc: 'DESC',
-            $asc: 'ASC'
-          };
-
-          const sorting = sortOpts[key];
-          if (sorting) {
-            query += ` ORDER BY ${options.$orderby[key]} ${sorting}`;
-          }
-        }
-
-        // @todo: validate the limit and ensure that is an integer
-        if (options.$limit) {
-          query += ` LIMIT ${options.$limit}`;
-        }
-      }
+      whereObject = {};
+      options = {};
+    } else if (arguments.length === 2) {
+      callback = options;
+      options = {};
     }
 
-    this.connection.execute(query, queryObj.values, { prepare: true }, (err, result) => {
+    const queryBuilder = new QueryBuilder(this.table, whereObject, options);
+
+    const params = {
+      partitionKeys: this._partitionKeys,
+      clusteringColumns: this._clusteringColumns,
+      indexes: this._indexes
+    };
+
+    let queryObject = queryBuilder.getQuery(params);
+
+
+    this.connection.execute(queryObject.string, queryObject.values, { prepare: true }, (err, result) => {
       if (err) {
         return callback(err);
       }
