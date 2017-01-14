@@ -6,28 +6,7 @@ const config = {
 
 const hecuba = new Hecuba(config);
 
-// @todo: abstract it into another module and add log levels as well
-function log(level, message, data) {
-  if (level === 'info') {
-    level = 'log';
-  }
-
-  // eslint-disable-next-line
-  console[level](message);
-
-  if(data) {
-    // eslint-disable-next-line
-    console[level](data);
-  }
-
-  // eslint-disable-next-line
-  console[level]('--------------------------------------------');
-}
-
-const logger = {
-  info: log.bind(this, 'info'),
-  error: log.bind(this, 'error')
-};
+const logger = require('../src/logger');
 
 hecuba.connect((err) => {
   if (err) {

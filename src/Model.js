@@ -244,7 +244,6 @@ class Model {
 
     let queryObject = queryBuilder.getQuery(params);
 
-
     this.connection.execute(queryObject.string, queryObject.values, { prepare: true }, (err, result) => {
       if (err) {
         return callback(err);

@@ -21,6 +21,9 @@ module.exports = {
     "semi": [
       "error",
       "always"
+    ],
+    camelcase: [
+      "error", {properties: "never"}
     ]
   }
 };

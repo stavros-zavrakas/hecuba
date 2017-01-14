@@ -4,6 +4,8 @@ const _ = require('lodash');
 
 const helpers = require('./helpers');
 
+const logger = require('./logger');
+
 const { queryOperators } = helpers;
 
 class QueryBuilder {
@@ -88,9 +90,7 @@ class QueryBuilder {
               queryObj.values.push(condition[cond]);
             }
           } else {
-            // @todo: use a logger for this!
-            // eslint-disable-next-line
-            console.log(`The condition ${cond} is not supported`);
+            logger.warn(`The condition ${cond} is not supported`);
           }
         });
       }
