@@ -27,6 +27,8 @@ class Hecuba {
       };
     }
 
+    // @todo: should this be moved into the connect function and implement 
+    // setter methods to be able to set config options?
     this.client = new cassandraDriver.Client(this.config);
 
     this.keyspace = config.keyspace || '';
