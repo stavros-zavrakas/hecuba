@@ -1,12 +1,13 @@
 'use strict';
 
+const _ = require('lodash');
+
 const helpers = require('./helpers');
 
 const { types } = helpers;
 
 class Model {
 
-  // The functions below will run at boot time and it is ok to throw an exception
   constructor(connection, keyspace, name) {
     this.connection = connection;
     this.keyspace = keyspace;
@@ -15,9 +16,10 @@ class Model {
     this._schema = {};
     this._partitionKeys = [];
     this._clusteringColumns = [];
+    this._indexes = [];
   }
 
-  validateSchema(schema) {
+  _validateSchema(schema) {
     const keys = Object.keys(schema);
 
     const isValidSchema = keys.every(key => {
@@ -27,29 +29,40 @@ class Model {
 
       return true;
     });
-
-    return isValidSchema;
   }
 
-  validatePrimaryKey(keys, schema) {
-    return keys.some(key => !!schema[key])
+  _validateQueryFields(keys, schema) {
+    return keys.every(key => {
+      if(!schema[key]) {
+        throw new Error(`Type [ ${key} ] is not part of the schema`);
+      }
+
+      return true;
+    });
   }
 
-  validate() {
-    this.validateSchema(this._schema);
+  _validate() {
+    this._validateSchema(this._schema);
 
-    let isValid = this.validatePrimaryKey(this._partitionKeys, this._schema);
-
-    if (!isValid) {
-      throw new Error(`The partitionKeys for the model [ ${this.name} ] are not valid`);
-    }
+    this._validateQueryFields(this._partitionKeys, this._schema);
 
     if (this._clusteringColumns.length) {
-      isValid = this.validatePrimaryKey(this._clusteringColumns, this._schema);
-      if (!isValid) {
-        throw new Error(`The clusteringColumns for the model [ ${this.name} ] are not valid`);
-      }
+      this._validateQueryFields(this._clusteringColumns, this._schema);
     }
+
+    if (this._indexes.length) {
+      this._validateQueryFields(this._indexes, this._schema);
+    }
+  }
+
+  indexes(indexes = []) {
+    if (!Array.isArray(indexes)) {
+      throw new Error('The indexes must be an array');
+    }
+
+    this._indexes = indexes;
+
+    return this;
   }
 
   partitionKeys(keys = []) {
@@ -73,24 +86,24 @@ class Model {
   }
 
   schema(schema = {}) {
-    if (!this._partitionKeys.length) {
-      throw new Error('The partitionKeys must be defined before the schema');
-    }
-
     this._schema = schema;
-
-    this.validate();
 
     return this;
   }
 
-  // The functions below will run at request time and we should never throw an exception!
+  load() {
+    if (_.isEmpty(this._partitionKeys)) {
+      throw new Error(`The partitionKeys for table [ ${this.table} ] are not defined`);
+    } else if (_.isEmpty(this._schema)) {
+      throw new Error(`The schema for the table [ ${this.table} ] is not defined`);
+    }
 
+    this._validate();
+
+    return this;
+  }
 
   // @todo: 
-  // - Validate the where clause against the schema
-  // - Validate the where clause against the partition keys
-  // - Validate the where clause against the clustering columns
   // - Calculate the select as (selectParams) instead of having always *?
   // - Check the options and in the case of findOne add the limit to the query
   find(where, options, callback) {
@@ -99,21 +112,21 @@ class Model {
       options = {};
     }
 
-    const keys = Object.keys(where);
-
-    // const isWherePartOfSchema = keys.every(key => return types.indexOf(where[key]) > -1);    
-    // if(!isWherePartOfSchema) {
-    //   return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
-    // }
-
-    // const isWherePartOfPartitionKeys = keys.every(key => return types.indexOf(where[key]) > -1);    
-    // if(!isWherePartOfSchema) {
-    //   return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
-    // }
-
-    // Create an object with this structure: { fields: [user_id, last_name], values: [123, 'Zavrakas'] }
     const fields = Object.keys(where);
 
+    const isValidWhere = fields.every(field => {
+      let isPartOfPartitionKey = this._partitionKeys.indexOf(field) > -1;
+      let isPartOfClusteringColumn = this._clusteringColumns.indexOf(field) > -1;
+      let isPartOfIndex = this._indexes.indexOf(field) > -1;
+
+      return isPartOfPartitionKey || isPartOfClusteringColumn || isPartOfIndex;
+    });
+
+    if(!isValidWhere) {
+      return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
+    }
+
+    // Create an object with this structure: { fields: [user_id, last_name], values: [123, 'Zavrakas'] }
     const queryObj = fields.reduce((queryObj, queryField) => {
       queryObj.fields.push(`${queryField} = ?`);
       queryObj.values.push(where[queryField]);

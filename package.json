@@ -9,6 +9,7 @@
   "author": "Stavros Zavrakas",
   "license": "ISC",
   "dependencies": {
-    "cassandra-driver": "3.1.6"
+    "cassandra-driver": "3.1.6",
+    "lodash": "4.17.4"
   }
 }
