@@ -131,6 +131,8 @@ function createFieldsValuesObject(whereObject) {
             queryObj.values.push(condition[cond]);
           }
         } else {
+          // @todo: use a logger for this!
+          // eslint-disable-next-line
           console.log(`The condition ${cond} is not supported`);
         }
       });

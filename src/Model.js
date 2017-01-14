@@ -200,11 +200,15 @@ class Model {
    * Analyzing the where object and produces the proper query statements.
    * Then fires the find request agains the cassandra driver.
    *
+   * @param  whereObject (optional) is an object that describes the query 
+   *         that we have to fire against cassansra. Supports IN, GT (>),
+   *         GTE (>=), LTE (<=) and LT (<) queries
+   * @param  options (optional) This object must be defined in the case that
+   *         we would like to fire an ORDER BY or a LIMIT query
    * @return An array of objects that the query was able to match in the database
    *
    * @todo: 
    * - Calculate the select as (selectParams) instead of having always *?
-   * - Check the options and in the case of findOne add the limit to the query
    * - Support for IN, ORDER BY, >, < queries
    *   Example:
    *   const query = {
@@ -234,29 +238,31 @@ class Model {
         options = {};
       }
 
-      const fields = Object.keys(whereObject);
+      if (!_.isEmpty(whereObject)) {
+        const fields = Object.keys(whereObject);
 
-      const params = {
-        fields: fields,
-        partitionKeys: this._partitionKeys,
-        clusteringColumns: this._clusteringColumns,
-        indexes: this._indexes
-      };
+        const params = {
+          fields: fields,
+          partitionKeys: this._partitionKeys,
+          clusteringColumns: this._clusteringColumns,
+          indexes: this._indexes
+        };
 
-      const isValidWhere = helpers.isValidWhereClause(params);
+        const isValidWhere = helpers.isValidWhereClause(params);
 
-      if (!isValidWhere) {
-        return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
-      }
+        if (!isValidWhere) {
+          return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
+        }
 
-      queryObj = helpers.createFieldsValuesObject(whereObject);
+        queryObj = helpers.createFieldsValuesObject(whereObject);
 
-      query += ` WHERE `;
-      query += queryObj.fields.join(' AND ');
+        query += ` WHERE `;
+        query += queryObj.fields.join(' AND ');
 
-      // @todo: validate the limit and ensure that is an integer
-      if (options.limit) {
-        query += ` LIMIT ${options.limit}`;
+        // @todo: validate the limit and ensure that is an integer
+        if (options.limit) {
+          query += ` LIMIT ${options.limit}`;
+        }
       }
     }
 

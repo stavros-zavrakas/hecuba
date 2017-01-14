@@ -6,12 +6,35 @@ const config = {
 
 const hecuba = new Hecuba(config);
 
+// @todo: abstract it into another module and add log levels as well
+function log(level, message, data) {
+  if (level === 'info') {
+    level = 'log';
+  }
+
+  // eslint-disable-next-line
+  console[level](message);
+
+  if(data) {
+    // eslint-disable-next-line
+    console[level](data);
+  }
+
+  // eslint-disable-next-line
+  console[level]('--------------------------------------------');
+}
+
+const logger = {
+  info: log.bind(this, 'info'),
+  error: log.bind(this, 'error')
+};
+
 hecuba.connect((err) => {
   if (err) {
-    console.log(err);
+    logger.error('Error connecting to hecuba', err);
   }
-  
-  console.log('hecuba connected succesfully');
+
+  logger.info('hecuba connected succesfully');
 
   // Model with partitionKeys & clusteringColumns
   const usersModel = hecuba.model('users')
@@ -39,11 +62,10 @@ hecuba.connect((err) => {
   // FindOned all users
   usersModel.find((err, data) => {
     if (err) {
-      console.log(err);
+      logger.error('Error finding all the users', err);
     }
 
-    console.log('Find all users result');
-    console.log(data);
+    logger.info('Find all users result', data);
   });
 
   // Find by user_ids using in query
@@ -53,11 +75,10 @@ hecuba.connect((err) => {
     }
   }, (err, data) => {
     if (err) {
-      console.log(err);
+      logger.error('Error finding users using an IN query', err);
     }
 
-    console.log('Find by user_id using in query');
-    console.log(data);
+    logger.info('Find by user_id using in query', data);
   });
 
   // Find by user_id
@@ -65,11 +86,10 @@ hecuba.connect((err) => {
     user_id: '5151df1c-d931-11e6-bf26-cec0c932ce01'
   }, (err, data) => {
     if (err) {
-      console.log(err);
+      logger.error('Error finding a user by user id', err);
     }
 
-    console.log('Find by user_id result');
-    console.log(data);
+    logger.info('Find by user_id result', data);
   });
 
   // FindOne by user_id
@@ -77,11 +97,19 @@ hecuba.connect((err) => {
     user_id: '5151df1c-d931-11e6-bf26-cec0c932ce01'
   }, (err, data) => {
     if (err) {
-      console.log(err);
+      logger.error('Error finding one user by user_id', err);
     }
 
-    console.log('FindOne by user_id result');
-    console.log(data);
+    logger.info('FindOne by user_id result', data);
+  });
+
+  // Find using an empty object. Should be a select all.
+  usersModel.findOne({}, (err, data) => {
+    if (err) {
+      logger.error('Error finding all users with an empty object as query', err);
+    }
+
+    logger.info('Find using an empty object', data);
   });
 
   // find products by store_id and filter using the price
@@ -93,11 +121,10 @@ hecuba.connect((err) => {
     }
   }, (err, data) => {
     if (err) {
-      console.log(err);
+      logger.error('Error performing an filtering query', err);
     }
 
-    console.log('Find products by store_id and filter using the price field');
-    console.log(data);
+    logger.info('Find products by store_id and filter using the price field', data);
   });
 
 });
