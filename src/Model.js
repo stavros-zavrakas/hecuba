@@ -57,7 +57,7 @@ class Model {
    */
   _validateQueryFields(keys, schema) {
     return keys.every(key => {
-      if(!schema[key]) {
+      if (!schema[key]) {
         throw new Error(`Type [ ${key} ] is not part of the schema`);
       }
 
@@ -96,7 +96,7 @@ class Model {
    * @throws Error if there is a key that is not defined in the schema
    */
   indexes(indexes = []) {
-    if(this._initialized) {
+    if (this._initialized) {
       throw new Error(`The indexes for the model [ ${this.name} ] are defined. You can not change them.`);
     }
 
@@ -120,7 +120,7 @@ class Model {
    * @throws Error if there is a key that is not defined in the schema
    */
   partitionKeys(keys = []) {
-    if(this._initialized) {
+    if (this._initialized) {
       throw new Error(`The partitionKeys for the model [ ${this.name} ] are defined. You can not change them.`);
     }
 
@@ -144,7 +144,7 @@ class Model {
    * @throws Error if there is a key that is not defined in the schema
    */
   clusteringColumns(columns = []) {
-    if(this._initialized) {
+    if (this._initialized) {
       throw new Error(`The clusteringColumns for the model [ ${this.name} ] are defined. You can not change them.`);
     }
 
@@ -164,7 +164,7 @@ class Model {
    * @throws Error if there is a key that is not defined in the schema
    */
   schema(schema = {}) {
-    if(this._initialized) {
+    if (this._initialized) {
       throw new Error(`The schema for the model [ ${this.name} ] is defined. You can not redefine it.`);
     }
 
@@ -181,7 +181,7 @@ class Model {
    * @return The instance of the model so that we can chain on it
    */
   load() {
-    if(this._initialized) {
+    if (this._initialized) {
       throw new Error(`Unable to load model [ ${this.name} ] multiple times`);
     }
 
@@ -196,44 +196,44 @@ class Model {
     return this;
   }
 
-  // @todo: 
-  // - Calculate the select as (selectParams) instead of having always *?
-  // - Check the options and in the case of findOne add the limit to the query
-  find(where, options, callback) {
+  /**
+   * Analyzing the where object and produces the proper query statements.
+   * Then fires the find request agains the cassandra driver.
+   *
+   * @return The instance of the model so that we can chain on it
+   *
+   * @todo: 
+   * - Calculate the select as (selectParams) instead of having always *?
+   * - Check the options and in the case of findOne add the limit to the query
+   */
+  find(whereObject, options, callback) {
     if (arguments.length === 2 && typeof options === 'function') {
       callback = options;
       options = {};
     }
 
-    const fields = Object.keys(where);
+    const fields = Object.keys(whereObject);
 
-    const isValidWhere = fields.every(field => {
-      let isPartOfPartitionKey = this._partitionKeys.indexOf(field) > -1;
-      let isPartOfClusteringColumn = this._clusteringColumns.indexOf(field) > -1;
-      let isPartOfIndex = this._indexes.indexOf(field) > -1;
+    const params = {
+      fields: fields,
+      partitionKeys: this._partitionKeys,
+      clusteringColumns: this._clusteringColumns,
+      indexes: this._indexes
+    };
 
-      return isPartOfPartitionKey || isPartOfClusteringColumn || isPartOfIndex;
-    });
+    const isValidWhere = helpers.isValidateWhereClause(params);
 
-    if(!isValidWhere) {
+    if (!isValidWhere) {
       return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
     }
 
-    // Create an object with this structure: { fields: [user_id, last_name], values: [123, 'Zavrakas'] }
-    const queryObj = fields.reduce((queryObj, queryField) => {
-      queryObj.fields.push(`${queryField} = ?`);
-      queryObj.values.push(where[queryField]);
+    const queryObj = helpers.createFieldsValuesObject({ fields, whereObject });
 
-      return queryObj;
-    }, { fields: [], values: [] });
-
-    // Concatenate the fields
     let query = `SELECT * FROM ${this.table} WHERE `;
     query += queryObj.fields.join(' AND ');
 
-    // Fire the query
     this.connection.execute(query, queryObj.values, { prepare: true }, (err, result) => {
-      if(err){
+      if (err) {
         return callback(err);
       }
 
