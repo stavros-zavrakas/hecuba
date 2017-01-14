@@ -260,8 +260,8 @@ class Model {
         query += queryObj.fields.join(' AND ');
 
         // @todo: validate the limit and ensure that is an integer
-        if (options.limit) {
-          query += ` LIMIT ${options.limit}`;
+        if (options.$limit) {
+          query += ` LIMIT ${options.$limit}`;
         }
       }
     }
@@ -287,7 +287,7 @@ class Model {
    */
   findOne(whereObject, callback) {
     const options = {
-      limit: 1
+      $limit: 1
     };
 
     this.find(whereObject, options, (err, data) => {
