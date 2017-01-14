@@ -100,7 +100,7 @@ class Model {
       throw new Error(`The indexes for the model [ ${this.name} ] are defined. You can not change them.`);
     }
 
-    if (!Array.isArray(indexes)) {
+    if (!_.isArray(indexes)) {
       throw new Error('The indexes must be an array');
     }
 
@@ -124,7 +124,7 @@ class Model {
       throw new Error(`The partitionKeys for the model [ ${this.name} ] are defined. You can not change them.`);
     }
 
-    if (!Array.isArray(keys) || !keys.length) {
+    if (!_.isArray(keys) || !keys.length) {
       throw new Error('The partitionKeys must be an array');
     }
 
@@ -148,7 +148,7 @@ class Model {
       throw new Error(`The clusteringColumns for the model [ ${this.name} ] are defined. You can not change them.`);
     }
 
-    if (!Array.isArray(columns)) {
+    if (!_.isArray(columns)) {
       throw new Error('The clusteringColumns must be an array');
     }
 
@@ -205,10 +205,22 @@ class Model {
    * @todo: 
    * - Calculate the select as (selectParams) instead of having always *?
    * - Check the options and in the case of findOne add the limit to the query
+   * - Support for IN, ORDER BY, >, < queries
+   *   Example:
+   *   const query = {
+   *     name: 'Stavros',
+   *     age : { '$gt':20, '$lte':40 },
+   *     last_name : { '$in': ['Zavrakas','Zav'] }
+   *   }
+   *
+   *   const options = ,
+   *     $orderBy:{ '$asc' :'age' },
+   *     $limit: 5
+   *   };
    */
   find(whereObject, options, callback) {
     let query = `SELECT * FROM ${this.table}`;
-    
+
     let queryObj = { 
       fields: [],
       values: []
@@ -221,7 +233,7 @@ class Model {
         callback = options;
         options = {};
       }
-
+      debugger;
       const fields = Object.keys(whereObject);
 
       const params = {
@@ -231,13 +243,13 @@ class Model {
         indexes: this._indexes
       };
 
-      const isValidWhere = helpers.isValidateWhereClause(params);
+      const isValidWhere = helpers.isValidWhereClause(params);
 
       if (!isValidWhere) {
         return callback(new Error(`Some elements of the where clause are not part of the schema (${this.name})`));
       }
 
-      queryObj = helpers.createFieldsValuesObject({ fields, whereObject });
+      queryObj = helpers.createFieldsValuesObject(whereObject);
 
       query += ` WHERE `;
       query += queryObj.fields.join(' AND ');
@@ -278,7 +290,7 @@ class Model {
       }
 
       let result = {};
-      if(Array.isArray(data) && data[0]) {
+      if(_.isArray(data) && data[0]) {
         result = data[0];
       }
 
