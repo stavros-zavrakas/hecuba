@@ -93,7 +93,7 @@ class QueryBuilder {
    */
   _getOrderByString(orderByValue) {
     let orderBy = '';
-    
+
     if (_.isPlainObject(orderByValue)) {
       const orderByKeys = Object.keys(orderByValue);
 
@@ -198,7 +198,7 @@ class QueryBuilder {
       previous.values.push(insertObject[field]);
       previous.placeholders.push('?');
       return previous;
-    },{ keys: [], values: [], placeholders: [] });
+    }, { keys: [], values: [], placeholders: [] });
   }
 
   /**

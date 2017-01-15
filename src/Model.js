@@ -237,7 +237,7 @@ class Model {
    */
   find(whereObject, options, callback) {
     if (arguments.length === 1) {
-      callback =  whereObject;
+      callback = whereObject;
       whereObject = {};
       options = {};
     } else if (arguments.length === 2) {
@@ -269,7 +269,7 @@ class Model {
    */
   findOne(whereObject, callback) {
     if (arguments.length === 1) {
-      callback =  whereObject;
+      callback = whereObject;
       whereObject = {};
     }
 
@@ -281,7 +281,7 @@ class Model {
       }
 
       let result = {};
-      if(_.isArray(data) && data[0]) {
+      if (_.isArray(data) && data[0]) {
         result = data[0];
       }
 
@@ -297,7 +297,7 @@ class Model {
       callback = options;
       options = {};
     }
-    
+
     const queryBuilder = new QueryBuilder(this.table, insertObject, options);
 
     const params = {
