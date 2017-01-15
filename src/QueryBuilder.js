@@ -75,18 +75,30 @@ class QueryBuilder {
    *         joind with the AND) and an array of values that will be used from
    *         the cassandra driver
    */
+
+ /*
+ * let whereObject = {
+ *   store_id: 123,
+ *   product_id : { '$in': [234, 345] },
+ *   price : { '$gt':40, '$lte': 240 }
+ * }
+ */
+
   _analyzeWhereObject() {
     const whereObject = this.whereObject;
 
     // Iterate over the fields
     return this.fields.reduce((queryObj, field) => {
+      const value = whereObject[field];
+
       // If the value of the field is string it is a simple equality
-      if (_.isString(whereObject[field])) {
+      if (_.isString(value)) {
         queryObj.fields.push(`${field} = ?`);
-        queryObj.values.push(whereObject[field]);
-      } else if (_.isPlainObject(whereObject[field])) {
+        queryObj.values.push(value);
+      } else if (_.isPlainObject(value)) {
         // If the value of the field is an object, we have to analyze the object
-        let condition = whereObject[field];
+        // because it is something more complex than a simple equality
+        let condition = value;
         let conditionArray = Object.keys(condition);
 
         // Iterate over the fields of the object that holds the values
@@ -131,6 +143,32 @@ class QueryBuilder {
     return query;
   }
 
+  _generateFilters() {
+    let filter = '';
+
+    if (this.filterOptions.$orderby) {
+      const keys = Object.keys(this.filterOptions.$orderby);
+      const key = keys[0];
+
+      const sortOpts = {
+        $desc: 'DESC',
+        $asc: 'ASC'
+      };
+
+      const sorting = sortOpts[key];
+      if (sorting) {
+        filter += ` ORDER BY ${this.filterOptions.$orderby[key]} ${sorting}`;
+      }
+    }
+
+    // @todo: validate the limit and ensure that is an integer
+    if (this.filterOptions.$limit) {
+      filter += ` LIMIT ${this.filterOptions.$limit}`;
+    }
+
+    return filter;
+  }
+
   /**
    * Validates and crunches the whereClause. Finally returns an object
    * that will be used from the cassandra driver.
@@ -163,25 +201,7 @@ class QueryBuilder {
 
       string += this._generateWhereClause(queryObject.fields);
 
-      if (this.filterOptions.$orderby) {
-        const keys = Object.keys(this.filterOptions.$orderby);
-        const key = keys[0];
-
-        const sortOpts = {
-          $desc: 'DESC',
-          $asc: 'ASC'
-        };
-
-        const sorting = sortOpts[key];
-        if (sorting) {
-          string += ` ORDER BY ${this.filterOptions.$orderby[key]} ${sorting}`;
-        }
-      }
-
-      // @todo: validate the limit and ensure that is an integer
-      if (this.filterOptions.$limit) {
-        string += ` LIMIT ${this.filterOptions.$limit}`;
-      }
+      string += this._generateFilters();
     }
 
     return {
