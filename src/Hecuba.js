@@ -2,6 +2,9 @@
 
 const cassandraDriver = require('cassandra-driver');
 
+const Uuid = cassandraDriver.types.Uuid;
+const TimeUuid = cassandraDriver.types.TimeUuid;
+
 const helpers = require('./helpers');
 
 const Model = require('./Model');
@@ -57,5 +60,15 @@ class Hecuba {
   }
 
 }
+
+// @todo: should we get an optional parameter and if exist
+// to generate a uuid using the parameter?
+Hecuba.uuid = () => {
+  return Uuid.random();
+};
+
+Hecuba.timeUuid = () => {
+  return TimeUuid.now();
+};
 
 module.exports = Hecuba;

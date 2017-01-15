@@ -13,6 +13,7 @@ const constants = {
   GREATER_THAN_EQUAL_SYMBOL: '>=',
   IN_KEY: '$in',
   IN: 'IN',
+  INSERT_INTO: 'INSERT INTO',
   LESS_THAN_KEY: '$lt',
   LESS_THAN_SYMBOL: '<',
   LESS_THAN_EQUAL_KEY: '$lte',

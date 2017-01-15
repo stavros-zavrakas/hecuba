@@ -33,12 +33,10 @@ const { supportedQueryOperators } = helpers;
  */
 class QueryBuilder {
 
-  constructor(table, whereObject, filterOptions = {}) {
+  constructor(table, params) {
     this.table = table;
-    this.whereObject = whereObject;
-    this.fields = Object.keys(this.whereObject);
-    this.filterOptions = filterOptions;
-    this.queryString = `${C.SELECT} * ${C.FROM} ${this.table}`;
+    this.params = params;
+    this.fields = Object.keys(this.params);
   }
 
   /**
@@ -71,6 +69,18 @@ class QueryBuilder {
 
       return isPartOfPartitionKey || isPartOfClusteringColumn || isPartOfIndex;
     });
+  }
+
+  _isValidInsert(imports) {
+    const { partitionKeys, clusteringColumns, schema } = imports;
+
+    const doesSatisfyPartionKeys = partitionKeys.every(key => this.fields.indexOf(key) > -1);
+
+    const doesSatisfyClusteringColumns = clusteringColumns.every((key) => this.fields.indexOf(key) > -1);
+
+    const doesSatisfySchema = this.fields.every(field => !!schema[field]);
+
+    return doesSatisfyPartionKeys && doesSatisfyClusteringColumns && doesSatisfySchema;
   }
 
   /**
@@ -182,14 +192,27 @@ class QueryBuilder {
     }, { fields: [], values: [], filters: {} });
   }
 
+  _generateInsertObject(insertObject) {
+    return this.fields.reduce((previous, field) => {
+      previous.keys.push(field);
+      previous.values.push(insertObject[field]);
+      previous.placeholders.push('?');
+      return previous;
+    },{ keys: [], values: [], placeholders: [] });
+  }
+
   /**
    * Join the fields that we 've recognized in the analyzeWhereObject function
    *
    * @return The string with the WHERE clause
    */
-  _generateWhereClause(fields) {
-    let query = ` ${C.WHERE} `;
-    query += fields.join(` ${C.AND} `);
+  _generateWhereClause(fields = []) {
+    let query = '';
+
+    if (fields.length) {
+      query = ` ${C.WHERE} `;
+      query += fields.join(` ${C.AND} `);
+    }
 
     return query;
   }
@@ -223,23 +246,45 @@ class QueryBuilder {
    *         and the values that will be substituted in the query
    *         string
    */
-  getQuery(imports) {
-    let string = this.queryString;
+  getSelectQuery(imports) {
+    let string = `${C.SELECT} * ${C.FROM} ${this.table}`;
     let queryObject = {};
 
-    if (!_.isEmpty(this.whereObject)) {
+    if (!_.isEmpty(this.params)) {
       const isValid = this._isValidWhereClause(imports);
 
       if (!isValid) {
         throw new Error(`Some elements of the where clause are not part of the schema (${this.table})`);
       }
 
-      queryObject = this._analyzeWhereObject(this.whereObject);
+      queryObject = this._analyzeWhereObject(this.params);
 
       string += this._generateWhereClause(queryObject.fields);
 
       string += this._generateFilters(queryObject.filters);
     }
+
+    return {
+      string: string,
+      values: queryObject.values || []
+    };
+  }
+
+  getInsertQuery(imports) {
+    let string = `${C.INSERT_INTO} ${this.table}`;
+
+    const isValid = this._isValidInsert(imports);
+
+    if (!isValid) {
+      throw new Error(`Some elements of the insert object are not valid (${this.table})`);
+    }
+
+    let queryObject = this._generateInsertObject(this.params);
+
+    const keys = queryObject.keys.join(',');
+    const placeholders = queryObject.placeholders.join(',');
+
+    string += `( ${keys} ) VALUES ( ${placeholders} )`;
 
     return {
       string: string,

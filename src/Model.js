@@ -6,6 +6,8 @@ const QueryBuilder = require('./QueryBuilder');
 
 const helpers = require('./helpers');
 
+const C = require('./constants');
+
 const { types } = helpers;
 
 /**
@@ -198,6 +200,18 @@ class Model {
     return this;
   }
 
+  execute(queryObject, callback) {
+
+    this.connection.execute(queryObject.string, queryObject.values, { prepare: true }, (err, result) => {
+      if (err) {
+        return callback(err);
+      }
+
+      return callback(null, result.rows);
+    });
+
+  }
+
   /**
    * Analyzing the where object and produces the proper query statements.
    * Then fires the find request agains the cassandra driver.
@@ -209,20 +223,17 @@ class Model {
    *         we would like to fire an ORDER BY or a LIMIT query
    * @return An array of objects that the query was able to match in the database
    *
+   * Example:
+   * const whereObject = {
+   *   name: 'Stavros',
+   *   age : { '$gt':20, '$lte':40 },
+   *   last_name : { '$in': ['Zavrakas','Zav'] }
+   *   $orderBy:{ '$asc' :'age' },
+   *   $limit: 5
+   * }
+   *
    * @todo: 
    * - Calculate the select as (selectParams) instead of having always *?
-   * - Support for IN, ORDER BY, >, < queries
-   *   Example:
-   *   const query = {
-   *     name: 'Stavros',
-   *     age : { '$gt':20, '$lte':40 },
-   *     last_name : { '$in': ['Zavrakas','Zav'] }
-   *   }
-   *
-   *   const options = ,
-   *     $orderBy:{ '$asc' :'age' },
-   *     $limit: 5
-   *   };
    */
   find(whereObject, options, callback) {
     if (arguments.length === 1) {
@@ -242,15 +253,9 @@ class Model {
       indexes: this._indexes
     };
 
-    let queryObject = queryBuilder.getQuery(params);
+    let queryObject = queryBuilder.getSelectQuery(params);
 
-    this.connection.execute(queryObject.string, queryObject.values, { prepare: true }, (err, result) => {
-      if (err) {
-        return callback(err);
-      }
-
-      return callback(null, result.rows);
-    });
+    this.execute(queryObject, callback);
   }
 
   /**
@@ -261,14 +266,16 @@ class Model {
    *
    * @todo: 
    * - Calculate the select as (selectParams) instead of having always *?
-   * - Check the options and in the case of findOne add the limit to the query
    */
   findOne(whereObject, callback) {
-    const options = {
-      $limit: 1
-    };
+    if (arguments.length === 1) {
+      callback =  whereObject;
+      whereObject = {};
+    }
 
-    this.find(whereObject, options, (err, data) => {
+    whereObject[C.LIMIT_KEY] = 1;
+
+    this.find(whereObject, (err, data) => {
       if (err) {
         return callback(err);
       }
@@ -282,8 +289,26 @@ class Model {
     });
   }
 
-  save() {
+  // Options can hold the isBatch flag
+  save(insertObject, options, callback) {
+    if (arguments.length === 1) {
+      throw new Error(`You have to provide at least the partition keys and the clustering columns if exist`);
+    } else if (arguments.length === 2) {
+      callback = options;
+      options = {};
+    }
+    
+    const queryBuilder = new QueryBuilder(this.table, insertObject, options);
 
+    const params = {
+      schema: this._schema,
+      partitionKeys: this._partitionKeys,
+      clusteringColumns: this._clusteringColumns
+    };
+
+    let queryObject = queryBuilder.getInsertQuery(params);
+
+    this.execute(queryObject, callback);
   }
 
   update() {
