@@ -45,12 +45,12 @@ const types = [
   'tuple'
 ];
 
-const queryOperators = {};
-queryOperators[C.GREATER_THAN_KEY] = C.GREATER_THAN_SYMBOL;
-queryOperators[C.LESS_THAN_KEY] = C.LESS_THAN_SYMBOL;
-queryOperators[C.GREATER_THAN_EQUAL_KEY] = C.GREATER_THAN_EQUAL_SYMBOL;
-queryOperators[C.LESS_THAN_EQUAL_KEY] = C.LESS_THAN_EQUAL_SYMBOL;
-queryOperators[C.IN_KEY] = C.IN;
+const supportedQueryOperators = {};
+supportedQueryOperators[C.GREATER_THAN_KEY] = C.GREATER_THAN_SYMBOL;
+supportedQueryOperators[C.LESS_THAN_KEY] = C.LESS_THAN_SYMBOL;
+supportedQueryOperators[C.GREATER_THAN_EQUAL_KEY] = C.GREATER_THAN_EQUAL_SYMBOL;
+supportedQueryOperators[C.LESS_THAN_EQUAL_KEY] = C.LESS_THAN_EQUAL_SYMBOL;
+supportedQueryOperators[C.IN_KEY] = C.IN;
 
 function getDefaultOptions() {
   return {
@@ -61,6 +61,6 @@ function getDefaultOptions() {
 module.exports = {
   consistencyOptions,
   types,
-  queryOperators,
+  supportedQueryOperators,
   getDefaultOptions
 };

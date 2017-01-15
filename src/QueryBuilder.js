@@ -8,7 +8,7 @@ const C = require('./constants');
 
 const logger = require('./logger');
 
-const { queryOperators } = helpers;
+const { supportedQueryOperators } = helpers;
 
 /**
  * This class is used to create an instance of a where clause
@@ -74,6 +74,79 @@ class QueryBuilder {
   }
 
   /**
+   * Converts an $orderby value into a string that can be used from
+   * the cassnadra driver
+   *
+   * @param  orderByValue object. We are trying to understand if 
+   *         it holds an accepted value with a $desc or $asc property
+   * @return A string that represents an IN (val1, val2) query
+   */
+  _getOrderByString(orderByValue) {
+    let orderBy = '';
+    
+    if (_.isPlainObject(orderByValue)) {
+      const orderByKeys = Object.keys(orderByValue);
+
+      // @todo: Assume that we can order only by one field
+      // consider adding an iteration for more fields
+      const orderByKey = orderByKeys[0];
+
+      const sortOpts = {
+        $desc: C.DESC,
+        $asc: C.ASC
+      };
+
+      const sorting = sortOpts[orderByKey];
+      if (sorting) {
+        orderBy = ` ${C.ORDER_BY_STRING} ${orderByValue[orderByKey]} ${sorting}`;
+      }
+    }
+
+    return orderBy;
+  }
+
+  /**
+   * Analyzes a complex query value. It can be an IN, GTE, LT etc query
+   *
+   * @param  field holds the field that we are crunching
+   * @param  condition holds the value of field that we are crunching.
+   *         
+   * @return An object with a fields and a value property. The will be
+   *         used later for further process and string generation
+   */
+  _getComplexConditionObject(field, conditionObject = {}) {
+    let conditionArray = Object.keys(conditionObject);
+
+    // Iterate over the fields of the object that holds the values
+    return conditionArray.reduce((queryObj, condition) => {
+      // Check if there is a valid operation
+      if (supportedQueryOperators[condition]) {
+        if (condition === C.IN_KEY) {
+          // The values of an IN query must be an array
+          if (!_.isArray(conditionObject[condition])) {
+            throw new Error(`The values of the ${condition} must be typeof array`);
+          }
+
+          // Create the placeholders
+          let placeholders = conditionObject[condition].map(() => ` ${C.QUERY_PLACEHOLDER}`);
+
+          // Push the data to the reduce object
+          queryObj.fields.push(`${field} ${C.IN} (${placeholders} )`);
+          queryObj.values.push(...conditionObject[condition]);
+        } else {
+          // We are in the case of the $lt, $gt etc
+          queryObj.fields.push(`${field} ${supportedQueryOperators[condition]} ?`);
+          queryObj.values.push(conditionObject[condition]);
+        }
+      } else {
+        logger.warn(`The conditionObject ${condition} is not supported`);
+      }
+
+      return queryObj;
+    }, { fields: [], values: [] });
+  }
+
+  /**
    * The most important function of the QueryBuilder it is iterating over 
    * the fields of the where clause and is trying to create the WHERE statement
    * with the placeholders and keeps an array with the values as well
@@ -88,57 +161,20 @@ class QueryBuilder {
     return this.fields.reduce((queryObj, field) => {
       const value = whereObject[field];
       if (field === C.ORDER_BY_KEY) {
-        // @todo: check that the value is object
-        const orderBykeys = Object.keys(value);
-        const orderByKey = orderBykeys[0];
-
-        const sortOpts = {
-          $desc: C.DESC,
-          $asc: C.ASC
-        };
-
-        const sorting = sortOpts[orderByKey];
-        if (sorting) {
-          queryObj.filters.orderBy = ` ${C.ORDER_BY_STRING} ${value[orderByKey]} ${sorting}`;
-        }
+        queryObj.filters.orderBy = this._getOrderByString(value);
       } else if (field === C.LIMIT_KEY) {
         queryObj.filters.limit = ` ${C.LIMIT_STRING} ${value}`;
       } else {
         // If the value of the field is string it is a simple equality
+        // If the value of the field is an object, we have to analyze the object
+        // because it is something more complex like an $in, $gte etc
         if (_.isString(value)) {
           queryObj.fields.push(`${field} = ${C.QUERY_PLACEHOLDER}`);
           queryObj.values.push(value);
         } else if (_.isPlainObject(value)) {
-          // If the value of the field is an object, we have to analyze the object
-          // because it is something more complex than a simple equality
-          let condition = value;
-          let conditionArray = Object.keys(condition);
-
-          // Iterate over the fields of the object that holds the values
-          conditionArray.forEach((cond) => {
-            // Check if there is a valid operation
-            if (queryOperators[cond]) {
-              if (cond === C.IN_KEY) {
-                // The values of an IN query must be an array
-                if (!_.isArray(condition[cond])) {
-                  throw new Error(`The values of the ${cond} must be typeof array`);
-                }
-
-                // Create the placeholders
-                let placeholders = condition[cond].map(() => ` ${C.QUERY_PLACEHOLDER}`);
-
-                // Push the data to the reduce object
-                queryObj.fields.push(`${field} ${C.IN} (${placeholders} )`);
-                queryObj.values = [...queryObj.values, ...condition[cond]];
-              } else {
-                // We are in the case of the $lt, $gt etc
-                queryObj.fields.push(`${field} ${queryOperators[cond]} ?`);
-                queryObj.values.push(condition[cond]);
-              }
-            } else {
-              logger.warn(`The condition ${cond} is not supported`);
-            }
-          });
+          const complexObject = this._getComplexConditionObject(field, value);
+          queryObj.fields = [...queryObj.fields, ...complexObject.fields];
+          queryObj.values = [...queryObj.values, ...complexObject.values];
         }
       }
 
@@ -187,8 +223,6 @@ class QueryBuilder {
    *         and the values that will be substituted in the query
    *         string
    */
-
-  // imports is: const { partitionKeys, clusteringColumns, indexes } = imports;
   getQuery(imports) {
     let string = this.queryString;
     let queryObject = {};
