@@ -281,10 +281,10 @@ class QueryBuilder {
 
     let queryObject = this._generateInsertObject(this.params);
 
-    const keys = queryObject.keys.join(',');
-    const placeholders = queryObject.placeholders.join(',');
+    const keys = queryObject.keys.join(`${C.COMMA_DELIMITER}`);
+    const placeholders = queryObject.placeholders.join(`${C.COMMA_DELIMITER}`);
 
-    string += `( ${keys} ) VALUES ( ${placeholders} )`;
+    string += `( ${keys} ) ${C.VALUES} ( ${placeholders} )`;
 
     return {
       string: string,

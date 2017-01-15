@@ -4,6 +4,7 @@ const constants = {
   AND: 'AND',
   ASC: 'ASC',
   ASC_KEY: '$asc',
+  COMMA_DELIMITER: ',',
   DESC: 'DESC',
   DESC_KEY: '$desc',
   FROM: 'FROM',
@@ -24,6 +25,7 @@ const constants = {
   ORDER_BY_STRING: 'ORDER BY',
   QUERY_PLACEHOLDER: '?',
   SELECT: 'SELECT',
+  VALUES: 'VALUES',
   WHERE: 'WHERE'
 };
 
