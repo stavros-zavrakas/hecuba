@@ -112,8 +112,7 @@ hecuba.connect((err) => {
     price: {
       $gte: 50,
       $lte: 250
-    }
-  }, {
+    },
     $limit: 1
   }, (err, data) => {
     if (err) {
@@ -129,8 +128,7 @@ hecuba.connect((err) => {
     price: {
       $gte: 50,
       $lte: 250
-    }
-  }, {
+    },
     $orderby: {
       $desc: 'price'
     },
@@ -149,8 +147,7 @@ hecuba.connect((err) => {
     price: {
       $gte: 50,
       $lte: 250
-    }
-  }, {
+    },
     $orderby: {
       $asc: 'price'
     },
