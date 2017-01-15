@@ -1,5 +1,7 @@
 'use strict';
 
+const C = require('./constants');
+
 const consistencyOptions = [
   'any',
   'one',
@@ -43,13 +45,12 @@ const types = [
   'tuple'
 ];
 
-const queryOperators = {
-  $gt: '>',
-  $lt: '<',
-  $gte: '>=',
-  $lte: '<=',
-  $in: 'IN'
-};
+const queryOperators = {};
+queryOperators[C.GREATER_THAN_KEY] = C.GREATER_THAN_SYMBOL;
+queryOperators[C.LESS_THAN_KEY] = C.LESS_THAN_SYMBOL;
+queryOperators[C.GREATER_THAN_EQUAL_KEY] = C.GREATER_THAN_EQUAL_SYMBOL;
+queryOperators[C.LESS_THAN_EQUAL_KEY] = C.LESS_THAN_EQUAL_SYMBOL;
+queryOperators[C.IN_KEY] = C.IN;
 
 function getDefaultOptions() {
   return {

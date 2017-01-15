@@ -1,3 +1,5 @@
+'use strict';
+
 const Hecuba = require('../src/Hecuba');
 
 const config = {

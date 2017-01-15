@@ -1,3 +1,5 @@
+'use strict';
+
 const levels = {
   DEBUG: 0,
   INFO: 1,

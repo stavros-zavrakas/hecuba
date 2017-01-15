@@ -22,8 +22,13 @@ module.exports = {
       "error",
       "always"
     ],
-    camelcase: [
-      "error", {properties: "never"}
+    "camelcase": [
+      "error",
+      {"properties": "never"}
+    ],
+    "strict": [
+      "error",
+      "global"
     ]
   }
 };

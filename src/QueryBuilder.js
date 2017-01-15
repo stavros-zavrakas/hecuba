@@ -4,6 +4,8 @@ const _ = require('lodash');
 
 const helpers = require('./helpers');
 
+const C = require('./constants');
+
 const logger = require('./logger');
 
 const { queryOperators } = helpers;
@@ -36,7 +38,7 @@ class QueryBuilder {
     this.whereObject = whereObject;
     this.fields = Object.keys(this.whereObject);
     this.filterOptions = filterOptions;
-    this.queryString = `SELECT * FROM ${this.table}`;
+    this.queryString = `${C.SELECT} * ${C.FROM} ${this.table}`;
   }
 
   /**
@@ -59,7 +61,7 @@ class QueryBuilder {
 
     return this.fields.every(field => {
       // Exclude from validation the fields with the keys $orderby and $limit
-      if (field === '$orderby' || field === '$limit') {
+      if (field === C.ORDER_BY_KEY || field === C.LIMIT_KEY) {
         return true;
       }
 
@@ -85,26 +87,26 @@ class QueryBuilder {
     // Iterate over the fields
     return this.fields.reduce((queryObj, field) => {
       const value = whereObject[field];
-      if (field === '$orderby') {
+      if (field === C.ORDER_BY_KEY) {
         // @todo: check that the value is object
         const orderBykeys = Object.keys(value);
         const orderByKey = orderBykeys[0];
 
         const sortOpts = {
-          $desc: 'DESC',
-          $asc: 'ASC'
+          $desc: C.DESC,
+          $asc: C.ASC
         };
 
         const sorting = sortOpts[orderByKey];
         if (sorting) {
-          queryObj.filters.orderBy = ` ORDER BY ${value[orderByKey]} ${sorting}`;
+          queryObj.filters.orderBy = ` ${C.ORDER_BY_STRING} ${value[orderByKey]} ${sorting}`;
         }
-      } else if (field === '$limit') {
-        queryObj.filters.limit = ` LIMIT ${value}`;
+      } else if (field === C.LIMIT_KEY) {
+        queryObj.filters.limit = ` ${C.LIMIT_STRING} ${value}`;
       } else {
         // If the value of the field is string it is a simple equality
         if (_.isString(value)) {
-          queryObj.fields.push(`${field} = ?`);
+          queryObj.fields.push(`${field} = ${C.QUERY_PLACEHOLDER}`);
           queryObj.values.push(value);
         } else if (_.isPlainObject(value)) {
           // If the value of the field is an object, we have to analyze the object
@@ -116,17 +118,17 @@ class QueryBuilder {
           conditionArray.forEach((cond) => {
             // Check if there is a valid operation
             if (queryOperators[cond]) {
-              if (cond === '$in') {
+              if (cond === C.IN_KEY) {
                 // The values of an IN query must be an array
                 if (!_.isArray(condition[cond])) {
                   throw new Error(`The values of the ${cond} must be typeof array`);
                 }
 
                 // Create the placeholders
-                let placeholders = condition[cond].map(() => ' ?');
+                let placeholders = condition[cond].map(() => ` ${C.QUERY_PLACEHOLDER}`);
 
                 // Push the data to the reduce object
-                queryObj.fields.push(`${field} IN (${placeholders} )`);
+                queryObj.fields.push(`${field} ${C.IN} (${placeholders} )`);
                 queryObj.values = [...queryObj.values, ...condition[cond]];
               } else {
                 // We are in the case of the $lt, $gt etc
@@ -150,8 +152,8 @@ class QueryBuilder {
    * @return The string with the WHERE clause
    */
   _generateWhereClause(fields) {
-    let query = ` WHERE `;
-    query += fields.join(' AND ');
+    let query = ` ${C.WHERE} `;
+    query += fields.join(` ${C.AND} `);
 
     return query;
   }
