@@ -28,6 +28,39 @@ Documentation.. coming soon..!
     } 
 ```
 
+Example:
+
+```
+timelineModel.find({
+  day: '12 Jan 2014',
+  $slice: [{
+    operator: '$gte',
+    fields: ['hours', 'minute'],
+    values: [3, 50]
+  }, {
+    operator: '$lte',
+    fields: ['hours', 'minute', 'second'],
+    values: [3, 50]
+  }],
+  $limit: 10
+}, (err, data) => {
+  if (err) {
+    logger.error('Error finding users using an IN query', err);
+  }
+
+  logger.info('Find by user_id using in query', data);
+});
+```
+
+It must produce this query:
+
+```
+  SELECT * FROM timeline WHERE day='12 Jan 2014'
+     AND (hour, min) >= (3, 50)
+     AND (hour, min, sec) <= (4, 37, 30);
+```
+
+
 - Add support for custom data types queries
 
     @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/cqlUseUDT.html
