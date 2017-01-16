@@ -231,9 +231,6 @@ class Model {
    *   $orderBy:{ '$asc' :'age' },
    *   $limit: 5
    * }
-   *
-   * @todo: 
-   * - Calculate the select as (selectParams) instead of having always *?
    */
   find(whereObject, options, callback) {
     if (arguments.length === 1) {
