@@ -15,6 +15,9 @@ Documentation.. coming soon..!
     @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/useQueryIN.html
 
 - Add support for slice partition queries
+
+    @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/use-slice-partition.html
+
 ```
     {
       $slice: {
@@ -24,7 +27,6 @@ Documentation.. coming soon..!
       }
     } 
 ```
-    @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/use-slice-partition.html
 
 - Add support for custom data types queries
 
