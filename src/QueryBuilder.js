@@ -41,7 +41,7 @@ class QueryBuilder {
 
     this.table = table;
     this.params = params;
-    this.paramFields = Object.keys(this.params);
+    this.paramsFields = Object.keys(this.params);
 
     this.values = values;
     this.valuesFields = Object.keys(this.values);
@@ -67,7 +67,7 @@ class QueryBuilder {
   _isValidWhereClause(imports) {
     const { partitionKeys, clusteringColumns, indexes } = imports;
 
-    return this.paramFields.every(field => {
+    return this.paramsFields.every(field => {
       // Exclude from validation the fields with the keys $orderby and $limit
       if (field === C.ORDER_BY_KEY || field === C.LIMIT_KEY) {
         return true;
@@ -84,11 +84,11 @@ class QueryBuilder {
   _isValidInsert(imports) {
     const { partitionKeys, clusteringColumns, schema } = imports;
 
-    const doesSatisfyPartionKeys = partitionKeys.every(key => this.paramFields.indexOf(key) > -1);
+    const doesSatisfyPartionKeys = partitionKeys.every(key => this.paramsFields.indexOf(key) > -1);
 
-    const doesSatisfyClusteringColumns = clusteringColumns.every((key) => this.paramFields.indexOf(key) > -1);
+    const doesSatisfyClusteringColumns = clusteringColumns.every((key) => this.paramsFields.indexOf(key) > -1);
 
-    const doesSatisfySchema = this.paramFields.every(field => !!schema[field]);
+    const doesSatisfySchema = this.paramsFields.every(field => !!schema[field]);
 
     return doesSatisfyPartionKeys && doesSatisfyClusteringColumns && doesSatisfySchema;
   }
@@ -107,7 +107,7 @@ class QueryBuilder {
       return false;
     }
 
-    const isProvidedPrimaryKey = this.paramFields.every(key => {
+    const isProvidedPrimaryKey = this.paramsFields.every(key => {
       return partitionKeys.indexOf(key) > -1 || clusteringColumns.indexOf(key) > -1;
     });
 
@@ -213,7 +213,7 @@ class QueryBuilder {
    */
   _analyzeWhereObject(whereObject) {
     // Iterate over the fields
-    return this.paramFields.reduce((queryObj, field) => {
+    return this.paramsFields.reduce((queryObj, field) => {
       const value = whereObject[field];
       if (field === C.ORDER_BY_KEY) {
         queryObj.filters.orderBy = this._getOrderByString(value);
@@ -238,7 +238,7 @@ class QueryBuilder {
   }
 
   _generateInsertObject(insertObject) {
-    return this.paramFields.reduce((previous, field) => {
+    return this.paramsFields.reduce((previous, field) => {
       previous.keys.push(field);
       previous.values.push(insertObject[field]);
       previous.placeholders.push('?');
@@ -247,7 +247,7 @@ class QueryBuilder {
   }
 
   _generateUpdateWhereObject(updateObject) {
-    return this.paramFields.reduce((previous, field) => {
+    return this.paramsFields.reduce((previous, field) => {
       previous.keys.push(`${field} = ?`);
       previous.values.push(updateObject[field]);
       return previous;

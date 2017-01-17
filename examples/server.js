@@ -10,7 +10,7 @@ const hecuba = new Hecuba(config);
 
 const logger = require('../src/logger');
 
-const action = 'UPDATE';
+const action = 'SELECT';
 
 hecuba.connect((err) => {
   if (err) {
