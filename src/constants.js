@@ -21,11 +21,13 @@ const constants = {
   LESS_THAN_EQUAL_SYMBOL: '<=',
   LIMIT_KEY: '$limit',
   LIMIT_STRING: 'LIMIT',
-  ORDER_BY_KEY: '$orderby',
+  ORDER_BY_KEY: '$orderBy',
   ORDER_BY_STRING: 'ORDER BY',
   QUERY_PLACEHOLDER: '?',
+  SET: 'SET',
   SELECT: 'SELECT',
   VALUES: 'VALUES',
+  UPDATE: 'UPDATE',
   WHERE: 'WHERE'
 };
 

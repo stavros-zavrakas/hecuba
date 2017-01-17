@@ -10,7 +10,7 @@ const hecuba = new Hecuba(config);
 
 const logger = require('../src/logger');
 
-const action = 'SELECT';
+const action = 'UPDATE';
 
 hecuba.connect((err) => {
   if (err) {
@@ -134,7 +134,7 @@ hecuba.connect((err) => {
         $gte: 50,
         $lte: 250
       },
-      $orderby: {
+      $orderBy: {
         $desc: 'price'
       },
       $limit: 10
@@ -153,7 +153,7 @@ hecuba.connect((err) => {
         $gte: 50,
         $lte: 250
       },
-      $orderby: {
+      $orderBy: {
         $asc: 'price'
       },
       $limit: 10
@@ -180,6 +180,22 @@ hecuba.connect((err) => {
 
       logger.info('User inserted succesfully', data);
     });
+  } else if (action === 'UPDATE') {
+    usersModel.update({
+      user_id: '5151df1c-d931-11e6-bf26-cec0c932ce01',
+      last_name: 'Zavrakas'
+    }, {
+      first_name: 'Stavros',
+      age: 18,
+      is_confirmed: false,
+    }, (err, data) => {
+      if (err) {
+        logger.error('Error updating a user', err);
+      }
+
+      logger.info('User updated succesfully', data);
+    });
+
   }
 
 });

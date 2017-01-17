@@ -308,8 +308,25 @@ class Model {
     this.execute(queryObject, callback);
   }
 
-  update() {
+  update(whereObject, updateObject, options, callback) {
+    if (arguments.length < 3) {
+      throw new Error(`You have to provide at the where clause and the values that needs to be updated`);
+    } else if (arguments.length === 3) {
+      callback = options;
+      options = {};
+    }
 
+    const queryBuilder = new QueryBuilder(this.table, whereObject, updateObject, options);
+
+    const params = {
+      schema: this._schema,
+      partitionKeys: this._partitionKeys,
+      clusteringColumns: this._clusteringColumns
+    };
+
+    let queryObject = queryBuilder.getUpdateQuery(params);
+
+    this.execute(queryObject, callback);
   }
 
   delete() {
