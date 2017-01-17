@@ -14,18 +14,64 @@ Documentation.. coming soon..!
 
     @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/useQueryIN.html
 
+```
+{
+  $in: {
+    fields: [
+      'event_start_date',
+      'event_end_date'
+    ],
+    values: [
+      ['2015-05-09', '2015-05-31'],
+      ['2015-05-06', '2015-05-31']
+    ]
+  }
+}
+```
+
+Example:
+
+```
+calendarModel.find({
+  $in: {
+    fields: [
+      'event_start_date',
+      'event_end_date'
+    ],
+    values: [
+      ['2015-05-09', '2015-05-31'],
+      ['2015-05-06', '2015-05-31']
+    ]
+  }
+}, (err, data) => {
+  if (err) {
+    logger.error('Error finding events using an IN query', err);
+  }
+
+  logger.info('Find by using in query on calendar', data);
+});
+```
+
+It must produce this query:
+
+```
+SELECT * FROM calendar WHERE event_id IN (100, 101, 102) 
+  AND (event_start_date, event_end_date) IN (('2015-05-09', '2015-05-31'), ('2015-05-06', '2015-05-31'));
+
+```
+
 - Add support for slice partition queries
 
     @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/use-slice-partition.html
 
 ```
-    {
-      $slice: {
-        operator: '$gte',
-        fields: ['minute', 'hours'],
-        values: [3, 50]
-      }
-    } 
+{
+  $slice: {
+    operator: '$gte',
+    fields: ['minute', 'hours'],
+    values: [3, 50]
+  }
+} 
 ```
 
 Example:
@@ -45,19 +91,19 @@ timelineModel.find({
   $limit: 10
 }, (err, data) => {
   if (err) {
-    logger.error('Error finding users using an IN query', err);
+    logger.error('Error finding timelines using a slice query', err);
   }
 
-  logger.info('Find by user_id using in query', data);
+  logger.info('Find by timeline by slicing', data);
 });
 ```
 
 It must produce this query:
 
 ```
-  SELECT * FROM timeline WHERE day='12 Jan 2014'
-     AND (hour, min) >= (3, 50)
-     AND (hour, min, sec) <= (4, 37, 30);
+SELECT * FROM timeline WHERE day='12 Jan 2014'
+  AND (hour, min) >= (3, 50)
+  AND (hour, min, sec) <= (4, 37, 30);
 ```
 
 
