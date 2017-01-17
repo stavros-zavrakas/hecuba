@@ -4,7 +4,9 @@
   "description": "Cassandra wrapper",
   "main": "index.js",
   "scripts": {
-    "example": "node examples/server.js",
+    "select": "node examples/select.js",
+    "insert": "node examples/insert.js",
+    "update": "node examples/update.js",
     "eslint": "eslint --ignore-path .gitignore .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

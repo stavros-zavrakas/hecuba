@@ -2,7 +2,11 @@
 
 const _ = require('lodash');
 
-const QueryBuilder = require('./QueryBuilder');
+const SelectQueryBuilder = require('./SelectQueryBuilder');
+
+const InsertQueryBuilder = require('./InsertQueryBuilder');
+
+const UpdateQueryBuilder = require('./UpdateQueryBuilder');
 
 const helpers = require('./helpers');
 
@@ -242,7 +246,7 @@ class Model {
       options = {};
     }
 
-    const queryBuilder = new QueryBuilder(this.table, whereObject, options);
+    const selectQueryBuilder = new SelectQueryBuilder(this.table, whereObject, options);
 
     const params = {
       partitionKeys: this._partitionKeys,
@@ -250,7 +254,7 @@ class Model {
       indexes: this._indexes
     };
 
-    let queryObject = queryBuilder.getSelectQuery(params);
+    let queryObject = selectQueryBuilder.getSelectQuery(params);
 
     this.execute(queryObject, callback);
   }
@@ -295,7 +299,7 @@ class Model {
       options = {};
     }
 
-    const queryBuilder = new QueryBuilder(this.table, insertObject, options);
+    const insertQueryBuilder = new InsertQueryBuilder(this.table, insertObject, options);
 
     const params = {
       schema: this._schema,
@@ -303,7 +307,7 @@ class Model {
       clusteringColumns: this._clusteringColumns
     };
 
-    let queryObject = queryBuilder.getInsertQuery(params);
+    let queryObject = insertQueryBuilder.getInsertQuery(params);
 
     this.execute(queryObject, callback);
   }
@@ -316,7 +320,7 @@ class Model {
       options = {};
     }
 
-    const queryBuilder = new QueryBuilder(this.table, whereObject, updateObject, options);
+    const updateQueryBuilder = new UpdateQueryBuilder(this.table, whereObject, updateObject, options);
 
     const params = {
       schema: this._schema,
@@ -324,7 +328,7 @@ class Model {
       clusteringColumns: this._clusteringColumns
     };
 
-    let queryObject = queryBuilder.getUpdateQuery(params);
+    let queryObject = updateQueryBuilder.getUpdateQuery(params);
 
     this.execute(queryObject, callback);
   }
