@@ -22,6 +22,7 @@ hecuba.connect((err) => {
   // Model with partitionKeys & clusteringColumns
   const usersModel = hecuba.model('users')
     .partitionKeys(['user_id'])
+    .clusteringColumns(['last_name'])
     .schema({
       user_id: 'timeuuid',
       age: 'int',
@@ -186,7 +187,7 @@ hecuba.connect((err) => {
       last_name: 'Zavrakas'
     }, {
       first_name: 'Stavros',
-      age: 18,
+      age: 28,
       is_confirmed: false,
     }, (err, data) => {
       if (err) {

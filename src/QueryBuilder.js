@@ -42,7 +42,7 @@ class QueryBuilder {
     this.table = table;
     this.params = params;
     this.paramFields = Object.keys(this.params);
-    
+
     this.values = values;
     this.valuesFields = Object.keys(this.values);
 
@@ -91,6 +91,41 @@ class QueryBuilder {
     const doesSatisfySchema = this.paramFields.every(field => !!schema[field]);
 
     return doesSatisfyPartionKeys && doesSatisfyClusteringColumns && doesSatisfySchema;
+  }
+
+  _isValidUpdate(imports) {
+    // - Partition keys and clustering columns can not participate in SET
+    // - Partition keys and clustering columns are mandatory in order to do the update
+    // - How should we handle the static columns?
+    const { partitionKeys, clusteringColumns, schema } = imports;
+
+    const isTryingToUpdatePrimaryKey = this.valuesFields.some(key => {
+      return partitionKeys.indexOf(key) > -1 || clusteringColumns.indexOf(key) > -1;
+    });
+
+    if (isTryingToUpdatePrimaryKey) {
+      return false;
+    }
+
+    const isProvidedPrimaryKey = this.paramFields.every(key => {
+      return partitionKeys.indexOf(key) > -1 || clusteringColumns.indexOf(key) > -1;
+    });
+
+    if (!isProvidedPrimaryKey) {
+      return false;
+    }
+
+    // Check that all the fields that we are trying to update are part of
+    // the schema
+    const schemaKeys = Object.keys(schema);
+    const intersectionSize = _.intersection(this.valuesFields, schemaKeys).length;
+    const isUpdatesPartOfSchema = this.valuesFields.length === intersectionSize;
+
+    if (!isUpdatesPartOfSchema) {
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -211,6 +246,14 @@ class QueryBuilder {
     }, { keys: [], values: [], placeholders: [] });
   }
 
+  _generateUpdateWhereObject(updateObject) {
+    return this.paramFields.reduce((previous, field) => {
+      previous.keys.push(`${field} = ?`);
+      previous.values.push(updateObject[field]);
+      return previous;
+    }, { keys: [], values: [] });
+  }
+
   /**
    * Join the fields that we 've recognized in the analyzeWhereObject function
    *
@@ -303,48 +346,24 @@ class QueryBuilder {
   }
 
   getUpdateQuery(imports) {
-    // update users set first_name = 'Stav' where user_id = 5151df1c-d931-11e6-bf26-cec0c932ce01 and last_name = 'Zavrakas';
-    // update users set first_name = ? where user_id = ? and last_name = ?;
     let string = `${C.UPDATE} ${this.table} ${C.SET} `;
 
-    const isValid = this._isValidInsert(imports);
-
+    const isValid = this._isValidUpdate(imports);
     if (!isValid) {
       throw new Error(`Some elements of the update object are not valid (${this.table})`);
     }
 
-    // @todo: the validation below must to be moved into another function
-    // We have to make stricter validation:
-    //  - Partition keys and clustering columns can not participate in SET
-    //  - Partition keys and clustering columns are mandatory in order to do the update
-    //  - How should we handle the static columns?
-    // const { partitionKeys, clusteringColumns, schema } = imports;
-    const { schema } = imports;
-    const schemaKeys = Object.keys(schema);
-    const intersectionSize = _.intersection(this.valuesFields, schemaKeys).length;
-    const isSubset = this.valuesFields.length === intersectionSize;
-
-    if (!isSubset) {
-      throw new Error(`There are some values to be updated that are not part of the schema (${this.table})`);
-    }
-
-    let updateObject = this.valuesFields.reduce((previous, key) => {
+    let updateSetObject = this.valuesFields.reduce((previous, key) => {
       previous.keys.push(`${key} = ?`);
       previous.values.push(this.values[key]);
       return previous;
     }, { keys: [], values: [] });
+    string += updateSetObject.keys.join(', ');
+    
+    const updateObject = this._generateUpdateWhereObject(this.params);
+    string += this._generateWhereClause(updateObject.keys);
 
-    let whereObject = this.paramFields.reduce((previous, key) => {
-      previous.keys.push(`${key} = ?`);
-      previous.values.push(this.params[key]);
-      return previous;
-    }, { keys: [], values: [] });
-
-    string += updateObject.keys.join(', ');
-    string += ` ${C.WHERE} `;
-    string += whereObject.keys.join(' AND ');
-
-    const values = [...updateObject.values, ...whereObject.values];
+    const values = [...updateSetObject.values, ...updateObject.values];
 
     return {
       string: string,
