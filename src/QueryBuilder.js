@@ -80,6 +80,11 @@ class QueryBuilder {
   }
 
   /**
+   * @todo: this should be adapted to accomodate the different type of queries: 
+   *        select ... where, update ... where, delete ... where
+   *        Some of the clauses are supported for the select ... where but not 
+   *        in the update ... where (like the slice)
+   *
    * The most important function of the QueryBuilder it is iterating over 
    * the fields of the where clause and is trying to create the WHERE statement
    * with the placeholders and keeps an array with the values as well
