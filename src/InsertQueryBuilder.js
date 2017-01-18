@@ -2,12 +2,8 @@
 
 const C = require('./constants');
 
-const QueryBuilder = require('./QueryBuilder');
-
-class InsertQueryBuilder extends QueryBuilder {
+class InsertQueryBuilder {
   constructor(table, insertObject, options = {}) {
-    super(table, insertObject, options);
-
     this.table = table;
     this.insertObject = insertObject;
     this.insertObjectFields = Object.keys(this.insertObject);

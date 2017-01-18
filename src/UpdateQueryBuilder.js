@@ -9,7 +9,7 @@ const QueryBuilder = require('./QueryBuilder');
 class UpdateQueryBuilder extends QueryBuilder {
 
   constructor(table, where, updateObject, options = {}) {
-    super(table, where, updateObject, options);
+    super(where);
 
     this.table = table;
 

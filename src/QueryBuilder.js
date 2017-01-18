@@ -33,20 +33,9 @@ const { supportedQueryOperators } = helpers;
  */
 class QueryBuilder {
 
-  constructor(table, params, values, options) {
-    if (arguments === 3) {
-      options = values;
-      values = {};
-    }
-
-    this.table = table;
-    this.params = params;
-    this.paramsFields = Object.keys(this.params);
-
-    this.values = values;
-    this.valuesFields = Object.keys(this.values);
-
-    this.options = options;
+  constructor(where) {
+    this.where = where;
+    this.whereFields = Object.keys(this.where);
   }
 
   /**
@@ -102,7 +91,7 @@ class QueryBuilder {
    */
   _analyzeWhereObject(whereObject) {
     // Iterate over the fields
-    return this.paramsFields.reduce((queryObj, field) => {
+    return this.whereFields.reduce((queryObj, field) => {
       const value = whereObject[field];
       if (field === C.ORDER_BY_KEY) {
         queryObj.filters.orderBy = this._getOrderByString(value);

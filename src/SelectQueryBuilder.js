@@ -8,7 +8,7 @@ const QueryBuilder = require('./QueryBuilder');
 
 class SelectQueryBuilder extends QueryBuilder {
   constructor(table, where, options = {}) {
-    super(table, where, options);
+    super(where);
 
     this.table = table;
     this.where = where;
@@ -34,7 +34,7 @@ class SelectQueryBuilder extends QueryBuilder {
   _isValidWhereClause(imports) {
     const { partitionKeys, clusteringColumns, indexes } = imports;
 
-    return this.paramsFields.every(field => {
+    return this.whereFields.every(field => {
       // Exclude from validation the fields with the keys $orderby and $limit
       if (field === C.ORDER_BY_KEY || field === C.LIMIT_KEY) {
         return true;
@@ -113,7 +113,7 @@ class SelectQueryBuilder extends QueryBuilder {
     let string = `${C.SELECT} * ${C.FROM} ${this.table}`;
     let queryObject = {};
 
-    if (!_.isEmpty(this.params)) {
+    if (!_.isEmpty(this.where)) {
       const isValid = this._isValidWhereClause(imports);
 
       if (!isValid) {
