@@ -8,6 +8,8 @@ const InsertQueryBuilder = require('./InsertQueryBuilder');
 
 const UpdateQueryBuilder = require('./UpdateQueryBuilder');
 
+const DeleteQueryBuilder = require('./DeleteQueryBuilder');
+
 const helpers = require('./helpers');
 
 const C = require('./constants');
@@ -314,7 +316,7 @@ class Model {
 
   update(whereObject, updateObject, options, callback) {
     if (arguments.length < 3) {
-      throw new Error(`You have to provide at the where clause and the values that needs to be updated`);
+      throw new Error(`You have to provide the where clause and the values that needs to be updated`);
     } else if (arguments.length === 3) {
       callback = options;
       options = {};
@@ -333,7 +335,25 @@ class Model {
     this.execute(queryObject, callback);
   }
 
-  delete() {
+  delete(whereObject, options, callback) {
+    if (arguments.length < 2) {
+      throw new Error(`You have to provide the where clause`);
+    } else if (arguments.length === 2) {
+      callback = options;
+      options = {};
+    }
+
+    const deleteQueryBuilder = new DeleteQueryBuilder(this.table, whereObject, options);
+
+    const params = {
+      partitionKeys: this._partitionKeys,
+      clusteringColumns: this._clusteringColumns,
+      indexes: this._indexes
+    };
+
+    let queryObject = deleteQueryBuilder.getDeleteQuery(params);
+
+    this.execute(queryObject, callback);
 
   }
 

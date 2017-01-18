@@ -7,6 +7,7 @@ const constants = {
   COMMA_DELIMITER: ',',
   DESC: 'DESC',
   DESC_KEY: '$desc',
+  DELETE_FROM: 'DELETE FROM',
   FROM: 'FROM',
   GREATER_THAN_KEY: '$gt',
   GREATER_THAN_SYMBOL: '>',
