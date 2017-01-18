@@ -31,20 +31,16 @@ hecuba.connect((err) => {
 
 ## Load the models
 
-After the connection you have to load your models. You can define
-partitionKeys, clusteringColumns and the schema. They will be used
-to do basic validation when we execute queries against the model.
+After the connection you have to load your models. You can define partitionKeys, clusteringColumns, indexes and the schema. They will be used to do basic validation when we execute queries against the model.
 
-It is important to call the .load() at the very end of the chain,
-otherwise there is a possibility that the model will not be initialized
-properly and you will experience issues during run time. As soon
-as you load the models then you are ready to query cassandra.
+It is important to call the .load() at the very end of the chain, otherwise there is a possibility that the model will not be initialized properly and you will experience issues during run time. As soon as you load the models then you are ready to query cassandra.
 
 ```
 // Model with partitionKeys & clusteringColumns
 const usersModel = hecuba.model('users')
   .partitionKeys(['user_id'])
   .clusteringColumns(['last_name'])
+  .indexes(['is_confirmed'])
   .schema({
     user_id: 'timeuuid',
     age: 'int',
@@ -73,6 +69,38 @@ Available where queries:
   },
   $limit: 1
 }
+```
+
+Having the above userModel instance you can fire find (SELECT) queries against cassandra:
+
+```
+usersModel.find({
+  user_id: {
+    $in: ['5151df1c-d931-11e6-bf26-cec0c932ce01']
+  }
+}, (err, data) => {
+  if (err) {
+    console.log('Error finding users using an IN query', err);
+  }
+
+  console.log('Find by user_id using in query', data);
+});
+```
+## FindOne
+
+This is a proxy function to Find and just specifies the limit to be 1. You can pass a where clause like in the Find but if you pass the $limit option it will be overwritten by this function:
+
+```
+// FindOne by user_id
+usersModel.findOne({
+  user_id: '5151df1c-d931-11e6-bf26-cec0c932ce01'
+}, (err, data) => {
+  if (err) {
+    console.log('Error finding one user by user_id', err);
+  }
+
+  console.log('FindOne by user_id result', data);
+});
 ```
 
 There is a plan to support more complex in queries like:
@@ -215,6 +243,9 @@ SELECT * FROM timeline WHERE day='12 Jan 2014'
   AND (hour, min, sec) <= (4, 37, 30);
 ```
 
+- Add batches support
+
+    @see: https://docs.datastax.com/en/cql/3.1/cql/cql_reference/batch_r.html
 
 - Add support for custom data types queries
 
