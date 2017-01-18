@@ -4,11 +4,67 @@ Hecuba is an Apache Cassandra ORM for Node.js
 
 Documentation.. coming soon..!
 
-@todo:
+## Find
 
-- Updates and delete queries support
+Available where queries:
 
-- Support select as queries instead of providing always
+```
+{
+  field_name: 'Stav',
+  field_name: {
+    $in: ['5151df1c-d931-11e6-bf26-cec0c932ce01']
+  },
+  field_name: {
+    $gte: 50,
+    $lte: 250
+  },
+  $orderBy: {
+    $desc: 'field_name'
+  },
+  $limit: 1
+}
+```
+
+There is a plan to support more complex in queries like:
+
+- Complex IN queries:
+
+    @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/useQueryIN.html
+
+```
+{
+  $in: {
+    fields: [
+      'field_name_start_date',
+      'field_name_end_date'
+    ],
+    values: [
+      ['2015-05-09', '2015-05-31'],
+      ['2015-05-06', '2015-05-31']
+    ]
+  }
+}
+```
+
+- Slicing queries:
+
+    @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/use-slice-partition.html
+
+```
+{
+  $slice: {
+    operator: '$gte',
+    fields: ['minute', 'hours'],
+    values: [3, 50]
+  }
+}
+```
+
+
+
+## @todo:
+
+- Support select as queries instead of providing always everything
 
 - Support complex IN queries
 
