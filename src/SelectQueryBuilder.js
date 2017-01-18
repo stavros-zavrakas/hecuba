@@ -73,7 +73,7 @@ class SelectQueryBuilder extends QueryBuilder {
 
       const sorting = sortOpts[orderByKey];
       if (sorting) {
-        orderBy = ` ${C.ORDER_BY_STRING} ${orderByValue[orderByKey]} ${sorting}`;
+        orderBy = ` ${C.ORDER_BY} ${orderByValue[orderByKey]} ${sorting}`;
       }
     }
 

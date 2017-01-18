@@ -101,7 +101,7 @@ class QueryBuilder {
       if (field === C.ORDER_BY_KEY) {
         queryObj.filters.orderBy = this._getOrderByString(value);
       } else if (field === C.LIMIT_KEY) {
-        queryObj.filters.limit = ` ${C.LIMIT_STRING} ${value}`;
+        queryObj.filters.limit = ` ${C.LIMIT} ${value}`;
       } else {
         // If the value of the field is string it is a simple equality
         // If the value of the field is an object, we have to analyze the object
