@@ -4,6 +4,56 @@ Hecuba is an Apache Cassandra ORM for Node.js
 
 Documentation.. coming soon..!
 
+## Connect to cassandra:
+
+You can use the following snippet in order to connect to cassandra:
+
+```
+const Hecuba = require('Hecuba');
+
+// @todo: these are the only options that are 
+// supported right now. More options will be
+// added soon
+const config = {
+  keyspace: 'hecuba'
+};
+
+const hecuba = new Hecuba(config);
+
+hecuba.connect((err) => {
+  if (err) {
+    console.log('Error connecting to hecuba', err);
+  }
+
+  console.log('hecuba connected succesfully');
+});
+```
+
+## Load the models
+
+After the connection you have to load your models. You can define
+partitionKeys, clusteringColumns and the schema. They will be used
+to do basic validation when we execute queries against the model.
+
+It is important to call the .load() at the very end of the chain,
+otherwise there is a possibility that the model will not be initialized
+properly and you will experience issues during run time. As soon
+as you load the models then you are ready to query cassandra.
+
+```
+// Model with partitionKeys & clusteringColumns
+const usersModel = hecuba.model('users')
+  .partitionKeys(['user_id'])
+  .clusteringColumns(['last_name'])
+  .schema({
+    user_id: 'timeuuid',
+    age: 'int',
+    first_name: 'text',
+    last_name: 'text',
+    is_confirmed: 'boolean'
+  }).load();
+```
+
 ## Find
 
 Available where queries:
@@ -59,6 +109,9 @@ There is a plan to support more complex in queries like:
   }
 }
 ```
+
+## Save
+
 
 
 
