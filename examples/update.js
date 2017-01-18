@@ -33,9 +33,9 @@ hecuba.connect((err) => {
     user_id: '5151df1c-d931-11e6-bf26-cec0c932ce01',
     last_name: 'Zavrakas'
   }, {
-    first_name: 'Stavros',
-    age: 18,
-    is_confirmed: false,
+    first_name: 'Stav',
+    age: 25,
+    is_confirmed: true,
   }, (err, data) => {
     if (err) {
       logger.error('Error updating a user', err);

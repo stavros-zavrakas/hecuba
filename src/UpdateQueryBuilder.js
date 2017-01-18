@@ -23,11 +23,11 @@ class UpdateQueryBuilder extends QueryBuilder {
   }
 
   _isValidUpdate(imports) {
-    // - Partition keys and clustering columns can not participate in SET
-    // - Partition keys and clustering columns are mandatory in order to do the update
-    // - How should we handle the static columns?
     const { partitionKeys, clusteringColumns, schema } = imports;
 
+    // Partition keys and clustering columns can not participate
+    // in SET query. If some of them are there, then we should 
+    // return an error
     const isTryingToUpdatePrimaryKey = this.updateObjectFields.some(key => {
       return partitionKeys.indexOf(key) > -1 || clusteringColumns.indexOf(key) > -1;
     });
@@ -36,6 +36,9 @@ class UpdateQueryBuilder extends QueryBuilder {
       return false;
     }
 
+    // Partition keys and clustering columns are mandatory in the
+    // where clause in order to do the update
+    // @todo: How should we handle the static columns, though?
     const isProvidedPrimaryKey = this.whereFields.every(key => {
       return partitionKeys.indexOf(key) > -1 || clusteringColumns.indexOf(key) > -1;
     });
@@ -45,7 +48,9 @@ class UpdateQueryBuilder extends QueryBuilder {
     }
 
     // Check that all the fields that we are trying to update are part of
-    // the schema
+    // the schema. The intersection between the update object fields and the
+    // schema keys should give the same array like the update object. Otherwise,
+    // there is a field that is not part of the schema
     const schemaKeys = Object.keys(schema);
     const intersectionSize = _.intersection(this.updateObjectFields, schemaKeys).length;
     const isUpdatesPartOfSchema = this.updateObjectFields.length === intersectionSize;
@@ -57,10 +62,17 @@ class UpdateQueryBuilder extends QueryBuilder {
     return true;
   }
 
-  _generateUpdateWhereObject(updateObject) {
-    return this.whereFields.reduce((previous, field) => {
-      previous.keys.push(`${field} = ?`);
-      previous.values.push(updateObject[field]);
+  /**
+   * Provides:
+   * {
+   *   keys: ["first_name = ?", "age = ?", "is_confirmed = ?"]
+   *   values: ["Stavros, 18, false]
+   * }
+   */
+  _generateSetObject() {
+    return this.updateObjectFields.reduce((previous, key) => {
+      previous.keys.push(`${key} = ${C.QUERY_PLACEHOLDER}`);
+      previous.values.push(this.updateObject[key]);
       return previous;
     }, { keys: [], values: [] });
   }
@@ -73,18 +85,19 @@ class UpdateQueryBuilder extends QueryBuilder {
       throw new Error(`Some elements of the update object are not valid (${this.table})`);
     }
 
-    let updateSetObject = this.updateObjectFields.reduce((previous, key) => {
-      previous.keys.push(`${key} = ?`);
-      previous.values.push(this.updateObject[key]);
-      return previous;
-    }, { keys: [], values: [] });
+    const updateSetObject = this._generateSetObject();
 
-    string += updateSetObject.keys.join(', ');
+    const updateObject = super._analyzeWhereObject(this.where);
     
-    const updateObject = this._generateUpdateWhereObject(this.where);
+    // Concatenates the set keys. It will be a string like:
+    // "first_name = ?, age = ?, is_confirmed = ?"
+    string += updateSetObject.keys.join(`${C.COMMA_DELIMITER} `);
 
-    string += super._generateWhereClause(updateObject.keys);
+    // Concatenates the where keys. It will be a string like:
+    // "WHERE user_id = ? AND last_name = ?"
+    string += super._generateWhereClause(updateObject.fields);
 
+    // Concatenates tha values of the set with the values of the update
     const values = [...updateSetObject.values, ...updateObject.values];
 
     return {

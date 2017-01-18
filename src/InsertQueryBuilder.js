@@ -30,7 +30,7 @@ class InsertQueryBuilder extends QueryBuilder {
     return this.insertObjectFields.reduce((previous, field) => {
       previous.keys.push(field);
       previous.values.push(insertObject[field]);
-      previous.placeholders.push('?');
+      previous.placeholders.push(`${C.QUERY_PLACEHOLDER}`);
       return previous;
     }, { keys: [], values: [], placeholders: [] });
   }
