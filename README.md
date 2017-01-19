@@ -61,8 +61,8 @@ Available where queries:
 ```
 {
   field_name: 'Stav',
-  field_name: {
-    $in: ['5151df1c-d931-11e6-bf26-cec0c932ce01']
+  $in: {
+    field_name: ['5151df1c-d931-11e6-bf26-cec0c932ce01']
   },
   field_name: {
     $gte: 50,

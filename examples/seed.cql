@@ -87,3 +87,7 @@ SELECT * FROM timeline;
 SELECT * FROM timeline WHERE day='12 Jan 2014'
    AND (hour, min) >= (3, 50)
    AND (hour, min, sec) <= (4, 37, 30);
+
+SELECT * FROM timeline WHERE day='12 Jan 2014' 
+   AND (hour, min) 
+   IN ((3, 43), (4, 37));

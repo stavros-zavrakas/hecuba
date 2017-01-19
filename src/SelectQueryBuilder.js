@@ -36,7 +36,7 @@ class SelectQueryBuilder extends QueryBuilder {
 
     return this.whereFields.every(field => {
       // Exclude from validation the fields with the keys $orderby and $limit
-      if (field === C.ORDER_BY_KEY || field === C.LIMIT_KEY) {
+      if (field === C.ORDER_BY_KEY || field === C.LIMIT_KEY || C.IN_KEY) {
         return true;
       }
 
@@ -46,38 +46,6 @@ class SelectQueryBuilder extends QueryBuilder {
 
       return isPartOfPartitionKey || isPartOfClusteringColumn || isPartOfIndex;
     });
-  }
-
-  /**
-   * Converts an $orderby value into a string that can be used from
-   * the cassnadra driver
-   *
-   * @param  orderByValue object. We are trying to understand if 
-   *         it holds an accepted value with a $desc or $asc property
-   * @return A string that represents an IN (val1, val2) query
-   */
-  _getOrderByString(orderByValue) {
-    let orderBy = '';
-
-    if (_.isPlainObject(orderByValue)) {
-      const orderByKeys = Object.keys(orderByValue);
-
-      // @todo: Assume that we can order only by one field
-      // consider adding an iteration for more fields
-      const orderByKey = orderByKeys[0];
-
-      const sortOpts = {
-        $desc: C.DESC,
-        $asc: C.ASC
-      };
-
-      const sorting = sortOpts[orderByKey];
-      if (sorting) {
-        orderBy = ` ${C.ORDER_BY} ${orderByValue[orderByKey]} ${sorting}`;
-      }
-    }
-
-    return orderBy;
   }
 
   _generateFilters(filters) {
