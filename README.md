@@ -94,11 +94,14 @@ Available where queries:
 }
 ```
 
-Supports simple and complex IN queries. It is producing queries like that:
+- Supports simple and complex IN queries. It is producing queries like that:
 
 ```
-SELECT * FROM calendar WHERE event_id IN (100, 101, 102) 
-  AND (event_start_date, event_end_date) IN (('2015-05-09', '2015-05-31'), ('2015-05-06', '2015-05-31'));
+SELECT * FROM calendar 
+  WHERE event_id 
+  IN (100, 101, 102) 
+  AND (event_start_date, event_end_date)
+  IN (('2015-05-09', '2015-05-31'), ('2015-05-06', '2015-05-31'));
 
 ``` 
 
@@ -122,8 +125,8 @@ SELECT * FROM calendar WHERE event_id IN (100, 101, 102)
 
   ```
   SELECT * FROM timeline WHERE day='12 Jan 2014'
-     AND (hour, min) >= (3, 50)
-     AND (hour, min, sec) <= (4, 37, 30);
+    AND (hour, min) >= (3, 50)
+    AND (hour, min, sec) <= (4, 37, 30);
   ```
 
   @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/use-slice-partition.html
