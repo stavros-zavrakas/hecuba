@@ -119,33 +119,37 @@ class QueryBuilder {
   // Should provide:
   // hour IN (?, ?)
   // (hour, min) IN ((?, ?), (?, ?));
-  _$in(values) {
-    let inMetadata;
+  _$in(inObject) {
+    if (!_.isPlainObject(inObject)) {
+      throw new Error(`The $in query must be typeof object`);
+    }
+
+    let values;
     let inQueryString;
 
     // This is the case of a complex $in
-    if(values.$fields && values.$values) {
-      if(!_.isArray(values.$fields)) {
+    if(inObject.$fields && inObject.$values) {
+      if(!_.isArray(inObject.$fields)) {
         throw new Error(`The fields of the $in.$fields must be typeof array`);
-      } else if(!_.isArray(values.$values)) {
+      } else if(!_.isArray(inObject.$values)) {
         throw new Error(`The fields of the $in.$values must be typeof array`);
       }
 
       // Join all the fields and create a string that will be used in the
       // IN query
-      let fieldsList = values.$fields.join(', ');
+      let fieldsList = inObject.$fields.join(', ');
 
       // Iterate over the values array and create an array that contains the
       // tuples of the placeholders: ['(?,?)', '(?,?)']
-      inMetadata = values.$values.reduce((prev, value) => {
+      let inMetadata = inObject.$values.reduce((prev, value) => {
         if(!_.isArray(value)) {
           throw new Error(`The fields of the $in.$values must be typeof array`);
         }
 
-        let tmp = Array(value.length).fill('?').join(',');
-        tmp = `( ${tmp} )`;
+        let placeholders = Array(value.length).fill('?').join(',');
+        placeholders = `( ${placeholders} )`;
 
-        prev.placeholders.push(tmp);
+        prev.placeholders.push(placeholders);
 
         prev.values = [...prev.values, ...value];
         return prev;
@@ -154,16 +158,32 @@ class QueryBuilder {
 
       const joinedPlacholders = inMetadata.placeholders.join(',');
 
+      values = inMetadata.values;
+
       // Concatenate all together
       inQueryString = `( ${fieldsList} ) IN ( ${joinedPlacholders} )`;
     } else {
+      // Get the first field of the $in object and check that is typeof array
+      let inFields = Object.keys(inObject);
+      let firstField = inFields[0];
+      
+      if (!_.isArray(inObject[firstField])) {
+        throw new Error(`The values of the $in query must be typeof array`);
+      }
 
+      // Generate the placeholders
+      let placeholders = Array(inObject[firstField].length).fill('?').join(',');
+      placeholders = `( ${placeholders} )`;
+
+      inQueryString = `${firstField} IN ${placeholders}`;
+
+      values = inObject[firstField];
     }
 
     // Push the data to the reduce object
     return {
       fields: inQueryString || '',
-      values: inMetadata.values || []
+      values: values || []
     };
   }
 
