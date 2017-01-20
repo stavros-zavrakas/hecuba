@@ -41,6 +41,18 @@ hecuba.connect((err) => {
       title: 'text'
     }).load();
 
+  // Model with partitionKeys
+  const timelineModel = hecuba.model('timeline')
+    .partitionKeys(['day'])
+    .clusteringColumns(['hour', 'min', 'sec'])
+    .schema({
+      day: 'text',
+      hour: 'int',
+      min: 'int',
+      sec: 'int',
+      value: 'text'
+    }).load();
+
   // FindOned all users
   usersModel.find((err, data) => {
     if (err) {
@@ -52,8 +64,8 @@ hecuba.connect((err) => {
 
   // Find by user_ids using in query
   usersModel.find({
-    user_id: {
-      $in: ['5151df1c-d931-11e6-bf26-cec0c932ce01']
+    $in: {
+      user_id: ['5151df1c-d931-11e6-bf26-cec0c932ce01']
     }
   }, (err, data) => {
     if (err) {
@@ -162,4 +174,45 @@ hecuba.connect((err) => {
 
     logger.info('Find products by store_id, filter using the price field, order asc and limit the results', data);
   });
+
+  timelineModel.find({
+    day: '12 Jan 2014',
+    $in: {
+      $fields: [
+        'hour',
+        'min'
+      ],
+      $values: [
+        [3, 43],
+        [4, 37]
+      ]
+    }
+  }, (err, data) => {
+    if (err) {
+      logger.error('Error finding timelines using an IN query', err);
+    }
+
+    logger.info('Find timelines by using complex in query', data);
+  });
+
+  timelineModel.find({
+    day: '12 Jan 2014',
+    $slice: [{
+      $operator: '$gte',
+      $fields: ['hour', 'min'],
+      $values: [3, 50]
+    }, {
+      $operator: '$lte',
+      $fields: ['hour', 'min', 'sec'],
+      $values: [4, 37, 30]
+    }],
+    $limit: 10
+  }, (err, data) => {
+    if (err) {
+      logger.error('Error finding timelines using a slice query', err);
+    }
+
+    logger.info('Find by timeline by slicing', data);
+  });
+
 });
