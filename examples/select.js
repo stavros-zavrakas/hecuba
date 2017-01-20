@@ -177,6 +177,7 @@ hecuba.connect((err) => {
 
   debugger;
   timelineModel.find({
+    day: '12 Jan 2014',
     $in: {
       $fields: [
         'hour',

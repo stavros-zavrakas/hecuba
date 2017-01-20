@@ -97,78 +97,74 @@ class QueryBuilder {
     return orderBy;
   }
 
+  // {
+  //   $in: {
+  //     $fields: [
+  //       'field_name_start_date',
+  //       'field_name_end_date'
+  //     ],
+  //     $values: [
+  //       ['2015-05-09', '2015-05-31'],
+  //       ['2015-05-06', '2015-05-31']
+  //     ]
+  //   }
+  // }
+
+  // let inQuery = {
+  //   $in: {
+  //     field_name: ['123', '567']
+  //   }
+  // };
+
   // Should provide:
   // hour IN (?, ?)
   // (hour, min) IN ((?, ?), (?, ?));
   _$in(values) {
-    if (_.isPlainObject(values)) {
-      const valueFields = Object.keys(values);
+    let inMetadata;
+    let inQueryString;
 
-      const inMetadata = valueFields.reduce((inAccumulator, valueField) => {
-        // This is the case of a simple $in
-        if(valueField !== '$fields' && valueField !== '$values') {
-          if (!_.isArray(values[valueField])) {
-            throw new Error(`The values of the $in must be typeof array`);
-          } else if (inAccumulator.foundComplex === true) {
-            throw new Error(`You can not mix a complex with a simple $in`)
-          }
-
-          inAccumulator.foundComplex = false;
-          
-          inAccumulator.fields.push(valueField);
-          inAccumulator.values = [...inAccumulator.values, ...values[valueField]];
-        } else {
-          if (!_.isArray(values[valueField])) {
-            throw new Error(`The values of the ${valueField} must be typeof array`);
-          } else if (inAccumulator.foundComplex === false) {
-            throw new Error(`You can not mix a complex with a simple $in`)
-          }
-          
-          inAccumulator.foundComplex = true;
-          
-          if (valueField === '$fields') {
-            inAccumulator.fields.push(values[valueField]);
-          } else if (valueField === '$values') {
-            inAccumulator.values.push(values[valueField]);
-          }
-        }
-
-        return inAccumulator;
-      }, {fields: [], values: [], foundComplex: null});
-
-      // Create the placeholders
-      // fields: [
-      //   ['hour', 'min']
-      // ]
-      // const tmp = Array(field.length).fill(C.QUERY_PLACEHOLDER).join(C.COMMA_DELIMITER);
-      debugger;
-      let fields;
-      if (inMetadata.foundComplex === true) {
-          const fieldsPlaceholder = inMetadata.fields[0].join(C.COMMA_DELIMITER);
-
-          let valuePlaceholdersArray = inMetadata.values[0].map((value) => {
-            const tmp = Array(value.length).fill(C.QUERY_PLACEHOLDER).join(C.COMMA_DELIMITER);
-            return `( ${tmp} )`;
-          });
-
-          let valuePlaceholders = valuePlaceholdersArray.join(C.COMMA_DELIMITER);
-          fields = `( ${fieldsPlaceholder} ) ${C.IN_KEY} ( ${valuePlaceholders} )`;
-
-          inMetadata.values = [].concat.apply([], inMetadata.values);        
-      } else if (inMetadata.foundComplex === true) {
-        const placeholders = Array(value.length).fill(C.QUERY_PLACEHOLDER).join(C.COMMA_DELIMITER);
-        const inFieldsStr = inMetadata.fields.join(', ');
-        const placeholdersStr = placeholders.join(', ');
-        fields = `${inFieldsStr} ${C.IN} (${placeholdersStr} )`
+    // This is the case of a complex $in
+    if(values.$fields && values.$values) {
+      if(!_.isArray(values.$fields)) {
+        throw new Error(`The fields of the $in.$fields must be typeof array`);
+      } else if(!_.isArray(values.$values)) {
+        throw new Error(`The fields of the $in.$values must be typeof array`);
       }
 
+      // Join all the fields and create a string that will be used in the
+      // IN query
+      let fieldsList = values.$fields.join(', ');
 
-      // Push the data to the reduce object
-      return {
-        fields: fields || '',
-        values: inMetadata.values
-      };
+      // Iterate over the values array and create an array that contains the
+      // tuples of the placeholders: ['(?,?)', '(?,?)']
+      inMetadata = values.$values.reduce((prev, value) => {
+        if(!_.isArray(value)) {
+          throw new Error(`The fields of the $in.$values must be typeof array`);
+        }
+
+        let tmp = Array(value.length).fill('?').join(',');
+        tmp = `( ${tmp} )`;
+
+        prev.placeholders.push(tmp);
+
+        prev.values = [...prev.values, ...value];
+        return prev;
+      }, { placeholders: [], values: [] });
+
+
+      const joinedPlacholders = inMetadata.placeholders.join(',');
+
+      // Concatenate all together
+      inQueryString = `( ${fieldsList} ) IN ( ${joinedPlacholders} )`;
+    } else {
+
     }
+
+    // Push the data to the reduce object
+    return {
+      fields: inQueryString || '',
+      values: inMetadata.values || []
+    };
   }
 
   /**
