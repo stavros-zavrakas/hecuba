@@ -187,6 +187,55 @@ class QueryBuilder {
     };
   }
 
+  // {
+  //   $slice: [{
+  //     $operator: '$gte',
+  //     $fields: ['hours', 'minute'],
+  //     $values: [3, 50]
+  //   }, {
+  //     $operator: '$lte',
+  //     $fields: ['hours', 'minute', 'second'],
+  //     $values: [3, 50]
+  //   }],
+  // }
+
+  // SELECT * FROM timeline WHERE day='12 Jan 2014'
+  //   AND (hour, min) >= (3, 50)
+  //   AND (hour, min, sec) <= (4, 37, 30);
+  _$slice(sliceArray) {
+    if (!_.isArray(sliceArray)) {
+      throw new Error(`The $slice query must be typeof object`);
+    } 
+
+    let sliceMetadata = sliceArray.reduce((prev, slice) => {
+      if (typeof slice.$operator !== 'string') {
+        throw new Error(`The $slice.$operator query must be typeof string`);
+      } else if (!_.isArray(slice.$fields)) {
+        throw new Error(`The $slice.$fields query must be typeof array`);
+      } else if (!_.isArray(slice.$values)) {
+        throw new Error(`The $slice.$values query must be typeof array`);
+      } else if (!supportedQueryOperators[slice.$operator]) {
+        throw new Error(`The operator ${slice.$operator} is not valid`);
+      }
+
+      let fields = slice.$fields.join(',');
+      let placeholders = Array(slice.$values.length).fill('?').join(',');
+      let condition = `(${fields}) ${supportedQueryOperators[slice.$operator]} ( ${placeholders} )`;
+
+      prev.placeholders.push(condition);
+
+      prev.values = [...prev.values, ...slice.$values];
+
+      return prev;
+    }, { placeholders: [], values: [] });
+
+    return {
+      fields: sliceMetadata.placeholders || '',
+      values: sliceMetadata.values || []
+    };
+
+  }
+
   /**
    * @todo: this should be adapted to accomodate the different type of queries: 
    *        select ... where, update ... where, delete ... where
@@ -213,11 +262,13 @@ class QueryBuilder {
       } else if (field === C.IN_KEY) {
         const inMetadata = this._$in(value);
         
-        if (inMetadata) {
-          // Push the data to the reduce object
-          queryObj.fields.push(inMetadata.fields);
-          queryObj.values = [...queryObj.values, ...inMetadata.values];
-        }
+        queryObj.fields.push(inMetadata.fields);
+        queryObj.values = [...queryObj.values, ...inMetadata.values];
+      } else if (field === '$slice') {
+        const sliceMetadata = this._$slice(value);
+
+        queryObj.fields = [...queryObj.fields, ...sliceMetadata.fields];
+        queryObj.values = [...queryObj.values, ...sliceMetadata.values];
       } else {
         // If the value of the field is string it is a simple equality
         // If the value of the field is an object, we have to analyze the object

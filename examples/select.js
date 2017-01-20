@@ -194,4 +194,25 @@ hecuba.connect((err) => {
 
     logger.info('Find timelines by using complex in query', data);
   });
+
+  timelineModel.find({
+    day: '12 Jan 2014',
+    $slice: [{
+      $operator: '$gte',
+      $fields: ['hour', 'min'],
+      $values: [3, 50]
+    }, {
+      $operator: '$lte',
+      $fields: ['hour', 'min', 'sec'],
+      $values: [4, 37, 30]
+    }],
+    $limit: 10
+  }, (err, data) => {
+    if (err) {
+      logger.error('Error finding timelines using a slice query', err);
+    }
+
+    logger.info('Find by timeline by slicing', data);
+  });
+
 });

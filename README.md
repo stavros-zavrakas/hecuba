@@ -74,6 +74,15 @@ Available where queries:
       [4, 37]
     ]
   },
+  $slice: [{
+    $operator: '$gte',
+    $fields: ['hours', 'minute'],
+    $values: [3, 50]
+  }, {
+    $operator: '$lte',
+    $fields: ['hours', 'minute', 'second'],
+    $values: [3, 50]
+  }],
   field_name: {
     $gte: 50,
     $lte: 250
@@ -109,20 +118,25 @@ SELECT * FROM calendar WHERE event_id IN (100, 101, 102)
   }
 }
 ```
+- Supports slice partition queries like this:
 
-- Slicing queries:
+  ```
+  SELECT * FROM timeline WHERE day='12 Jan 2014'
+     AND (hour, min) >= (3, 50)
+     AND (hour, min, sec) <= (4, 37, 30);
+  ```
 
-    @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/use-slice-partition.html
+  @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/use-slice-partition.html
 
-```
-{
-  $slice: {
-    operator: '$gte',
-    fields: ['minute', 'hours'],
-    values: [3, 50]
-  }
-}
-```
+  ```
+  {
+    $slice: {
+      $operator: '$gte',
+      $fields: ['min', 'hours'],
+      $values: [3, 50]
+    }
+  } 
+  ```
 
 ## Save
 
@@ -131,52 +145,7 @@ SELECT * FROM calendar WHERE event_id IN (100, 101, 102)
 
 - Support select as queries instead of providing always everything
 
-- Add support for slice partition queries
-
-    @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/use-slice-partition.html
-
 ```
-{
-  $slice: {
-    $operator: '$gte',
-    $fields: ['minute', 'hours'],
-    $values: [3, 50]
-  }
-} 
-```
-
-Example:
-
-```
-timelineModel.find({
-  day: '12 Jan 2014',
-  $slice: [{
-    $operator: '$gte',
-    $fields: ['hours', 'minute'],
-    $values: [3, 50]
-  }, {
-    $operator: '$lte',
-    $fields: ['hours', 'minute', 'second'],
-    $values: [3, 50]
-  }],
-  $limit: 10
-}, (err, data) => {
-  if (err) {
-    logger.error('Error finding timelines using a slice query', err);
-  }
-
-  logger.info('Find by timeline by slicing', data);
-});
-```
-
-It must produce this query:
-
-```
-SELECT * FROM timeline WHERE day='12 Jan 2014'
-  AND (hour, min) >= (3, 50)
-  AND (hour, min, sec) <= (4, 37, 30);
-```
-
 
 - Add support for custom data types queries
 
