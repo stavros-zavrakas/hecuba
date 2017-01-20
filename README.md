@@ -98,11 +98,11 @@ SELECT * FROM calendar WHERE event_id IN (100, 101, 102)
 ```
 {
   $in: {
-    fields: [
+    $fields: [
       'field_name_start_date',
       'field_name_end_date'
     ],
-    values: [
+    $values: [
       ['2015-05-09', '2015-05-31'],
       ['2015-05-06', '2015-05-31']
     ]
@@ -138,9 +138,9 @@ SELECT * FROM calendar WHERE event_id IN (100, 101, 102)
 ```
 {
   $slice: {
-    operator: '$gte',
-    fields: ['minute', 'hours'],
-    values: [3, 50]
+    $operator: '$gte',
+    $fields: ['minute', 'hours'],
+    $values: [3, 50]
   }
 } 
 ```
@@ -151,13 +151,13 @@ Example:
 timelineModel.find({
   day: '12 Jan 2014',
   $slice: [{
-    operator: '$gte',
-    fields: ['hours', 'minute'],
-    values: [3, 50]
+    $operator: '$gte',
+    $fields: ['hours', 'minute'],
+    $values: [3, 50]
   }, {
-    operator: '$lte',
-    fields: ['hours', 'minute', 'second'],
-    values: [3, 50]
+    $operator: '$lte',
+    $fields: ['hours', 'minute', 'second'],
+    $values: [3, 50]
   }],
   $limit: 10
 }, (err, data) => {
