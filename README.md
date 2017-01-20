@@ -54,7 +54,7 @@ const usersModel = hecuba.model('users')
   }).load();
 ```
 
-## Find
+## Find @see: examples/select.js
 
 Available where queries:
 
@@ -63,6 +63,16 @@ Available where queries:
   field_name: 'Stav',
   $in: {
     field_name: ['5151df1c-d931-11e6-bf26-cec0c932ce01']
+  },
+  $in: {
+    $fields: [
+      'hour',
+      'min'
+    ],
+    $values: [
+      [3, 43],
+      [4, 37]
+    ]
   },
   field_name: {
     $gte: 50,
@@ -75,11 +85,15 @@ Available where queries:
 }
 ```
 
-There is a plan to support more complex in queries like:
+Supports simple and complex IN queries. It is producing queries like that:
 
-- Complex IN queries:
+```
+SELECT * FROM calendar WHERE event_id IN (100, 101, 102) 
+  AND (event_start_date, event_end_date) IN (('2015-05-09', '2015-05-31'), ('2015-05-06', '2015-05-31'));
 
-    @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/useQueryIN.html
+``` 
+
+@see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/useQueryIN.html
 
 ```
 {
@@ -113,61 +127,9 @@ There is a plan to support more complex in queries like:
 ## Save
 
 
-
-
 ## @todo:
 
 - Support select as queries instead of providing always everything
-
-- Support complex IN queries
-
-    @see: https://docs.datastax.com/en/cql/3.1/cql/cql_using/useQueryIN.html
-
-```
-{
-  $in: {
-    fields: [
-      'event_start_date',
-      'event_end_date'
-    ],
-    values: [
-      ['2015-05-09', '2015-05-31'],
-      ['2015-05-06', '2015-05-31']
-    ]
-  }
-}
-```
-
-Example:
-
-```
-calendarModel.find({
-  $in: {
-    fields: [
-      'event_start_date',
-      'event_end_date'
-    ],
-    values: [
-      ['2015-05-09', '2015-05-31'],
-      ['2015-05-06', '2015-05-31']
-    ]
-  }
-}, (err, data) => {
-  if (err) {
-    logger.error('Error finding events using an IN query', err);
-  }
-
-  logger.info('Find by using in query on calendar', data);
-});
-```
-
-It must produce this query:
-
-```
-SELECT * FROM calendar WHERE event_id IN (100, 101, 102) 
-  AND (event_start_date, event_end_date) IN (('2015-05-09', '2015-05-31'), ('2015-05-06', '2015-05-31'));
-
-```
 
 - Add support for slice partition queries
 
