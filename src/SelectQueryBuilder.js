@@ -36,6 +36,7 @@ class SelectQueryBuilder extends QueryBuilder {
 
     return this.whereFields.every(field => {
       // Exclude from validation the fields with the keys $orderby and $limit
+      // @todo: we have to validate the $in query
       if (field === C.ORDER_BY_KEY || field === C.LIMIT_KEY || C.IN_KEY) {
         return true;
       }

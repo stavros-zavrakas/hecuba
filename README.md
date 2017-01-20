@@ -148,7 +148,11 @@ SELECT * FROM calendar
 
 - Support select as queries instead of providing always everything
 
-```
+- Batch support
+
+- Identify if the where clause is valid for select/update/delete. Some where clauses are valid for select but not valid for update and delete
+
+- Validate the $in and the $slice queries?
 
 - Add support for custom data types queries
 
